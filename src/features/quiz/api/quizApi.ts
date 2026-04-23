@@ -1,0 +1,44 @@
+import type {
+  QuizAttemptResponse,
+  QuizItem,
+  QuizThemeCoverage,
+  SubmittedAnswer,
+} from '../../../entities/quiz/model/types';
+import { httpClient } from '../../../shared/lib/http/httpClient';
+
+interface SubmitQuizPayload {
+  patientId: string;
+  quizId: string;
+  submittedBy: string;
+  answers: SubmittedAnswer[];
+}
+
+interface QuizFilters {
+  patientProfile?: string;
+  patientId?: string;
+  mainDisease?: string;
+}
+
+export const quizApi = {
+  list(filters: QuizFilters) {
+    return httpClient.get<QuizItem[]>('/quizzes', {
+      query: {
+        patientProfile: filters.patientProfile,
+        patientId: filters.patientId,
+        mainDisease: filters.mainDisease,
+      },
+    });
+  },
+
+  coverage() {
+    return httpClient.get<QuizThemeCoverage>('/quizzes/catalog/coverage');
+  },
+
+  submit(payload: SubmitQuizPayload, token: string) {
+    return httpClient.post<SubmitQuizPayload, QuizAttemptResponse>(
+      '/quizzes/submit',
+      payload,
+      { token },
+    );
+  },
+};

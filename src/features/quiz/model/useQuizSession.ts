@@ -27,14 +27,18 @@ const evaluate = (question: QuizQuestion, selected: string[]): AnswerFeedback =>
   const isCorrect = toSignature(expected) === toSignature(selected);
   const correctLabels = question.options
     .filter((option) => option.isCorrect)
-    .map((option) => option.label)
-    .join(' / ');
+    .map((option) => option.label);
+  const selectedLabels = question.options
+    .filter((option) => selected.includes(option.code))
+    .map((option) => option.label);
+  const selectedText = selectedLabels.length ? selectedLabels.join(' / ') : 'Aucune option';
+  const expectedText = correctLabels.join(' / ');
 
   return {
     isCorrect,
     explanation: isCorrect
-      ? 'Bonne réponse. Continuez comme ça.'
-      : `Bonne réponse attendue: ${correctLabels}.`,
+      ? `Bonne réponse. Votre sélection: ${selectedText}. Cette réponse est cohérente avec les recommandations générales de suivi.`
+      : `Votre sélection: ${selectedText}. Réponse attendue: ${expectedText}. Cette indication reste informative et doit être confirmée avec un professionnel de santé.`,
   };
 };
 

@@ -3,6 +3,7 @@ import { useFhirExport } from '../features/fhir/model/useFhirExport';
 import { useAuth } from '../features/auth/model/useAuth';
 import { useQuizSession } from '../features/quiz/model/useQuizSession';
 import { LoginPage } from '../pages/LoginPage';
+import { MedicalNotice } from '../pages/MedicalNotice';
 import { QuizQuestionPage } from '../pages/QuizQuestionPage';
 import { QuizStartPage } from '../pages/QuizStartPage';
 import { PrimaryButton } from '../shared/ui/PrimaryButton';
@@ -74,10 +75,11 @@ function App() {
           </p>
           <p className="screen-subtitle">Note finale: {noteSur20}/20</p>
           <p className="screen-subtitle">
-            Conformité FHIR: {fhirExport.error ? 'Erreur export' : 'Questionnaire + Response prêts'}
+            Export FHIR: {fhirExport.error ? 'Indisponible' : 'Questionnaire et QuestionnaireResponse générés'}
           </p>
           {fhirExport.isLoading ? <p className="fhir-loading">Chargement export FHIR...</p> : null}
           {fhirExport.error ? <p className="error-text">{fhirExport.error}</p> : null}
+          <MedicalNotice variant="end" />
           <PrimaryButton
             onClick={() => {
               quizSession.start();

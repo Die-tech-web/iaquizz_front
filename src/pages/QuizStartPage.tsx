@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { QuizItem } from '../entities/quiz/model/types';
 import { getThemeLabel } from '../shared/lib/quiz/themeLabels';
 import { PrimaryButton } from '../shared/ui/PrimaryButton';
+import { MedicalNotice } from './MedicalNotice';
 
 interface QuizStartPageProps {
   quiz: QuizItem;
@@ -164,6 +165,7 @@ export function QuizStartPage({
           <PrimaryButton onClick={() => onStart(moduleRunIds)}>
             C&apos;est parti !
           </PrimaryButton>
+          <MedicalNotice variant="start" />
         </div>
       </section>
     </main>

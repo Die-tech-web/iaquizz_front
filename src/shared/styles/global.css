@@ -453,6 +453,35 @@ body {
   padding: 32px;
 }
 
+.medical-notice {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #f2c66d;
+  background: #fff8e8;
+  text-align: left;
+}
+
+.medical-notice__title {
+  margin: 0 0 6px;
+  color: #7a5300;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.medical-notice__text,
+.medical-notice__meta {
+  margin: 0;
+  color: #5f4b1f;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.medical-notice__meta {
+  margin-top: 6px;
+}
+
 .summary-back {
   margin-bottom: 10px;
   font-size: 20px;

@@ -50,3 +50,25 @@ export interface QuizThemeCoverage {
   isCompliant: boolean;
   themes: QuizThemeCoverageItem[];
 }
+
+export interface QuizRecommendationV2Item {
+  quizId: string;
+  title: string;
+  level: string;
+  mainTopic: string;
+  relatedTopics: string[];
+  targetProfiles: string[];
+  relevanceScore: number;
+  scoreHint: number;
+  reasons: string[];
+  matchedTopics: string[];
+}
+
+export interface QuizRecommendationV2Response {
+  patientId: string;
+  patientProfile: string;
+  dominantDisease: string | null;
+  generatedAt: string;
+  totalCandidates: number;
+  recommendations: QuizRecommendationV2Item[];
+}

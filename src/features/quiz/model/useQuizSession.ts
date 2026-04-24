@@ -3,10 +3,13 @@ import type { AuthResponse } from '../../../entities/auth/model/types';
 import type {
   QuizAttemptResponse,
   QuizItem,
+  QuizRecommendationV2Item,
+  QuizRecommendationV2Response,
   QuizQuestion,
   QuizThemeCoverage,
   SubmittedAnswer,
 } from '../../../entities/quiz/model/types';
+import { analysisApi } from '../../analysis/api/analysisApi';
 import { quizApi } from '../api/quizApi';
 
 interface AnswerFeedback {
@@ -16,6 +19,7 @@ interface AnswerFeedback {
 
 const RENAL_MAIN_DISEASE = 'CHRONIC_KIDNEY_DISEASE';
 const RENAL_PRIMARY_SLUG = 'module-renal-quiz-principal';
+const RECOMMENDATION_LIMIT = 10;
 
 const toSignature = (values: string[]) => values.slice().sort().join('|');
 
@@ -42,8 +46,56 @@ const evaluate = (question: QuizQuestion, selected: string[]): AnswerFeedback =>
   };
 };
 
+const orderQuizzesByRecommendations = (
+  quizzes: QuizItem[],
+  recommendation: QuizRecommendationV2Response | null,
+) => {
+  const recommendedIds = recommendation?.recommendations.map((item) => item.quizId) ?? [];
+  if (!recommendedIds.length) {
+    return quizzes;
+  }
+
+  const quizById = new Map(quizzes.map((item) => [item.id, item] as const));
+  const prioritized: QuizItem[] = [];
+  const prioritizedIds = new Set<string>();
+
+  recommendedIds.forEach((quizId) => {
+    const matched = quizById.get(quizId);
+    if (matched && !prioritizedIds.has(quizId)) {
+      prioritized.push(matched);
+      prioritizedIds.add(quizId);
+    }
+  });
+
+  const rankedIds = new Set(prioritized.map((item) => item.id));
+  const remaining = quizzes.filter((item) => !rankedIds.has(item.id));
+
+  return [...prioritized, ...remaining];
+};
+
+const movePrimaryRenalQuizFirst = (quizzes: QuizItem[]) => {
+  const primaryIndex = quizzes.findIndex((item) => item.slug === RENAL_PRIMARY_SLUG);
+  if (primaryIndex <= 0) {
+    return quizzes;
+  }
+
+  const primaryQuiz = quizzes[primaryIndex];
+  return [primaryQuiz, ...quizzes.filter((item) => item.id !== primaryQuiz.id)];
+};
+
+const toRecommendationMap = (recommendation: QuizRecommendationV2Response | null) => {
+  const map: Record<string, QuizRecommendationV2Item> = {};
+  (recommendation?.recommendations ?? []).forEach((item) => {
+    map[item.quizId] = item;
+  });
+  return map;
+};
+
 export const useQuizSession = (auth: AuthResponse | null) => {
   const [quizPool, setQuizPool] = useState<QuizItem[]>([]);
+  const [recommendationMap, setRecommendationMap] = useState<
+    Record<string, QuizRecommendationV2Item>
+  >({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [quiz, setQuiz] = useState<QuizItem | null>(null);
@@ -118,16 +170,26 @@ export const useQuizSession = (auth: AuthResponse | null) => {
 
   const fetchEffectiveQuizzes = async () => {
     if (!auth) {
-      return { quizzes: [] as QuizItem[], coverage: null as QuizThemeCoverage | null };
+      return {
+        quizzes: [] as QuizItem[],
+        coverage: null as QuizThemeCoverage | null,
+        recommendationMap: {} as Record<string, QuizRecommendationV2Item>,
+      };
     }
 
-    const [quizzesResult, coverageResult] = await Promise.allSettled([
+    const [quizzesResult, coverageResult, recommendationResult] = await Promise.allSettled([
       quizApi.list({
         patientProfile: auth.patient.profile,
         patientId: auth.patient.id,
         mainDisease: RENAL_MAIN_DISEASE,
       }),
       quizApi.coverage(),
+      analysisApi.recommendForPatientV2({
+        patientId: auth.patient.id,
+        token: auth.accessToken,
+        dominantDisease: RENAL_MAIN_DISEASE,
+        limit: RECOMMENDATION_LIMIT,
+      }),
     ]);
 
     const coverage = coverageResult.status === 'fulfilled' ? coverageResult.value : null;
@@ -137,10 +199,13 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     }
 
     const quizzes = quizzesResult.value;
-    const renalPrimaryQuiz = quizzes.find((item) => item.slug === RENAL_PRIMARY_SLUG);
-    const effectiveQuizzes = renalPrimaryQuiz ? [renalPrimaryQuiz] : quizzes;
+    const recommendation =
+      recommendationResult.status === 'fulfilled' ? recommendationResult.value : null;
+    const rankedQuizzes = orderQuizzesByRecommendations(quizzes, recommendation);
+    const effectiveQuizzes = movePrimaryRenalQuizFirst(rankedQuizzes);
+    const recommendationMap = toRecommendationMap(recommendation);
 
-    return { quizzes: effectiveQuizzes, coverage };
+    return { quizzes: effectiveQuizzes, coverage, recommendationMap };
   };
 
   useEffect(() => {
@@ -161,6 +226,7 @@ export const useQuizSession = (auth: AuthResponse | null) => {
         setSessionQuizCursor(0);
         setIsRunCompleted(false);
         setThemeCoverage(null);
+        setRecommendationMap({});
         return;
       }
 
@@ -168,8 +234,13 @@ export const useQuizSession = (auth: AuthResponse | null) => {
       setError(null);
 
       try {
-        const { quizzes: effectiveQuizzes, coverage } = await fetchEffectiveQuizzes();
+        const {
+          quizzes: effectiveQuizzes,
+          coverage,
+          recommendationMap: nextRecommendationMap,
+        } = await fetchEffectiveQuizzes();
         setThemeCoverage(coverage);
+        setRecommendationMap(nextRecommendationMap);
 
         if (!effectiveQuizzes.length) {
           setQuiz(null);
@@ -208,11 +279,16 @@ export const useQuizSession = (auth: AuthResponse | null) => {
 
     if (auth) {
       try {
-        const { quizzes: refreshedQuizzes, coverage } = await fetchEffectiveQuizzes();
+        const {
+          quizzes: refreshedQuizzes,
+          coverage,
+          recommendationMap: refreshedRecommendationMap,
+        } = await fetchEffectiveQuizzes();
         if (refreshedQuizzes.length > 0) {
           pool = refreshedQuizzes;
           setQuizPool(refreshedQuizzes);
           setThemeCoverage(coverage);
+          setRecommendationMap(refreshedRecommendationMap);
         }
       } catch {
         // Fallback to current in-memory pool if refresh fails.
@@ -399,6 +475,7 @@ export const useQuizSession = (auth: AuthResponse | null) => {
 
   return {
     quizPool,
+    recommendationMap,
     themeCoverage,
     quiz,
     currentIndex,

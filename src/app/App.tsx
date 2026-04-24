@@ -98,6 +98,7 @@ function App() {
       <QuizStartPage
         quiz={quizSession.quiz}
         quizzes={quizSession.quizPool}
+        recommendationMap={quizSession.recommendationMap}
         patientName={patientName}
         onSelectQuiz={quizSession.selectQuiz}
         onLogout={logout}

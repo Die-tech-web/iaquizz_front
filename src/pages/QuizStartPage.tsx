@@ -120,6 +120,9 @@ export function QuizStartPage({
 
   const orderedLearningPath = useMemo(() => {
     const uniqueRecommended = filterQuizzesWithoutQuestionOverlap(filteredQuizzes);
+    const originalIndex = new Map(
+      uniqueRecommended.map((item, index) => [item.id, index] as const),
+    );
 
     return [...uniqueRecommended].sort((left, right) => {
       const leftIsPrincipal = isPrincipalQuiz(left);
@@ -134,15 +137,11 @@ export function QuizStartPage({
         return leftRank - rightRank;
       }
 
-      const leftScore = recommendationMap[left.id]?.relevanceScore ?? 0;
-      const rightScore = recommendationMap[right.id]?.relevanceScore ?? 0;
-      if (leftScore !== rightScore) {
-        return rightScore - leftScore;
-      }
-
-      return left.title.localeCompare(right.title, 'fr');
+      const leftIndex = originalIndex.get(left.id) ?? Number.MAX_SAFE_INTEGER;
+      const rightIndex = originalIndex.get(right.id) ?? Number.MAX_SAFE_INTEGER;
+      return leftIndex - rightIndex;
     });
-  }, [filteredQuizzes, recommendationMap]);
+  }, [filteredQuizzes]);
 
   const moduleRunIds = useMemo(() => {
     if (!orderedLearningPath.length) {

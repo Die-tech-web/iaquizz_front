@@ -1,6 +1,8 @@
 import type {
+  QuizAdaptiveLevelResponse,
   QuizAttemptResponse,
   QuizItem,
+  QuizRecommendedResponse,
   QuizThemeCoverage,
   SubmittedAnswer,
 } from '../../../entities/quiz/model/types';
@@ -32,6 +34,25 @@ export const quizApi = {
 
   coverage() {
     return httpClient.get<QuizThemeCoverage>('/quizzes/catalog/coverage');
+  },
+
+  adaptiveLevel(patientId: string, token: string) {
+    return httpClient.get<QuizAdaptiveLevelResponse>(
+      `/quizzes/backoffice/patient/${patientId}/adaptive-level`,
+      { token },
+    );
+  },
+
+  recommended(patientId: string, token: string, mainDisease?: string) {
+    return httpClient.get<QuizRecommendedResponse>(
+      `/quizzes/recommended/patient/${patientId}`,
+      {
+        token,
+        query: {
+          mainDisease,
+        },
+      },
+    );
   },
 
   submit(payload: SubmitQuizPayload, token: string) {

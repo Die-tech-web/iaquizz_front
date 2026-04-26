@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { QuizItem, QuizRecommendationV2Item } from '../entities/quiz/model/types';
+import type {
+  QuizAdaptiveLevelResponse,
+  QuizItem,
+  QuizRecommendationV2Item,
+} from '../entities/quiz/model/types';
 import { getThemeLabel } from '../shared/lib/quiz/themeLabels';
 import { PrimaryButton } from '../shared/ui/PrimaryButton';
 import { MedicalNotice } from './MedicalNotice';
@@ -8,14 +12,12 @@ interface QuizStartPageProps {
   quiz: QuizItem;
   quizzes: QuizItem[];
   recommendationMap: Record<string, QuizRecommendationV2Item>;
+  adaptiveLevelDecision: QuizAdaptiveLevelResponse | null;
   patientName: string;
   onStart: (quizIds: string[]) => void;
   onSelectQuiz: (quizId: string) => void;
   onLogout: () => void;
 }
-
-const MODULE_RUN_SIZE = 10;
-const RECOMMENDATION_PREVIEW_SIZE = 5;
 
 const LEVEL_LABELS: Record<string, string> = {
   BEGINNER: 'Débutant',
@@ -36,6 +38,11 @@ const normalizeText = (value: string) =>
   value
     .toLowerCase()
     .replace(/\(quiz\s*\d+\)/gi, '')
+    .replace(/dans le module [^,]+,\s*/gi, '')
+    .replace(
+      /\b(au domicile|en consultation|au moment du traitement|lors du suivi mensuel|en prevention quotidienne|en phase de stabilisation|en coordination avec l equipe soignante|lors du controle biologique|en contexte de comorbidite|dans le parcours educatif)\b/gi,
+      'en contexte patient',
+    )
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -71,6 +78,7 @@ export function QuizStartPage({
   quiz,
   quizzes,
   recommendationMap,
+  adaptiveLevelDecision,
   patientName,
   onStart,
   onSelectQuiz,
@@ -143,17 +151,18 @@ export function QuizStartPage({
     });
   }, [filteredQuizzes]);
 
-  const moduleRunIds = useMemo(() => {
-    if (!orderedLearningPath.length) {
-      return [] as string[];
-    }
-
-    return orderedLearningPath.slice(0, MODULE_RUN_SIZE).map((item) => item.id);
-  }, [orderedLearningPath]);
-
   const recommendedPreview = useMemo(() => {
-    return orderedLearningPath.slice(0, RECOMMENDATION_PREVIEW_SIZE);
+    return orderedLearningPath;
   }, [orderedLearningPath]);
+
+  const currentLevel = adaptiveLevelDecision?.recommendedLevel ?? 'BEGINNER';
+  const nextLevel = adaptiveLevelDecision?.nextLevel ?? null;
+  const progressionPercentage = adaptiveLevelDecision?.progressionPercentage ?? 0;
+  const remainingPerfectScores = adaptiveLevelDecision?.remainingPerfectScoresToUnlock ?? 3;
+  const requiredPerfectScores = adaptiveLevelDecision?.requiredPerfectScoresForNextLevel ?? 3;
+  const currentLevelRank = LEVEL_RANK[currentLevel] ?? 1;
+  const levelOrder: Array<keyof typeof LEVEL_LABELS> = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
+  const labelForLevel = (level: string) => LEVEL_LABELS[level] ?? level;
 
   return (
     <main className="screen start-screen">
@@ -179,6 +188,41 @@ export function QuizStartPage({
               </div>
             </div>
 
+            <section className="level-journey" aria-label="Progression niveau">
+              <p className="level-journey__title">Votre progression</p>
+              <div className="level-journey__steps">
+                {levelOrder.map((level) => {
+                  const rank = LEVEL_RANK[level];
+                  const isCurrent = level === currentLevel;
+                  const isCompleted = rank < currentLevelRank;
+                  return (
+                    <span
+                      key={level}
+                      className={`level-step${isCurrent ? ' level-step--current' : ''}${isCompleted ? ' level-step--done' : ''}`}
+                    >
+                      {LEVEL_LABELS[level]}
+                    </span>
+                  );
+                })}
+              </div>
+              <p className="level-journey__current">
+                Niveau actuel: <strong>{labelForLevel(currentLevel)}</strong>
+              </p>
+              <p className="level-journey__metric">
+                Progression vers le niveau suivant: <strong>{progressionPercentage}%</strong>
+              </p>
+              {nextLevel ? (
+                <p className="level-journey__metric">
+                  Scores parfaits validés: <strong>{Math.max(requiredPerfectScores - remainingPerfectScores, 0)}</strong>/{requiredPerfectScores}
+                </p>
+              ) : null}
+              <p className="level-journey__objective">
+                {nextLevel
+                  ? `Encore ${remainingPerfectScores} quiz parfait(s) à 10/10 pour passer au niveau ${labelForLevel(nextLevel)}.`
+                  : 'Objectif atteint: niveau Avancé validé.'}
+              </p>
+            </section>
+
             <div className="theme-select-wrap">
               <label htmlFor="theme-select" className="theme-select-label">
                 Thème du quiz
@@ -201,7 +245,7 @@ export function QuizStartPage({
             <MedicalNotice variant="start" />
 
             <div className="start-actions">
-              <PrimaryButton className="start-action-button" onClick={() => onStart(moduleRunIds)}>
+              <PrimaryButton className="start-action-button" onClick={() => onStart([quiz.id])}>
                 C&apos;est parti !
               </PrimaryButton>
             </div>
@@ -212,7 +256,7 @@ export function QuizStartPage({
               <div className="recommendation-list__head">
                 <p className="recommendation-list__title">Recommandations personnalisées</p>
                 <p className="recommendation-list__count">
-                  Ordre conseillé: Débutant → Intermédiaire → Avancé, puis quiz principal.
+                  Ordre des niveaux: Débutant puis Intermédiaire puis Avancé.
                 </p>
               </div>
               {recommendedPreview.map((item) => {

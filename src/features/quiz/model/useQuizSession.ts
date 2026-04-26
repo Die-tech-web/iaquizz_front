@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { AuthResponse } from '../../../entities/auth/model/types';
 import type {
+  QuizAdaptiveLevelResponse,
   QuizAttemptResponse,
   QuizItem,
   QuizRecommendationV2Item,
@@ -17,18 +18,30 @@ interface AnswerFeedback {
   explanation: string;
 }
 
-const RENAL_MAIN_DISEASE = 'CHRONIC_KIDNEY_DISEASE';
-const RENAL_PRIMARY_SLUG = 'module-renal-quiz-principal';
+interface LevelUpNotice {
+  fromLevel: string;
+  toLevel: string;
+}
+
 const RECOMMENDATION_LIMIT = 10;
+const MAX_QUESTIONS_PER_QUIZ = 10;
 
 const toSignature = (values: string[]) => values.slice().sort().join('|');
 
-const evaluate = (question: QuizQuestion, selected: string[]): AnswerFeedback => {
+const isCorrectAnswer = (question: QuizQuestion, selectedValues: string[]) => {
   const expected = question.options
     .filter((option) => option.isCorrect)
     .map((option) => option.code);
+  return toSignature(expected) === toSignature(selectedValues);
+};
 
-  const isCorrect = toSignature(expected) === toSignature(selected);
+const trimQuizQuestions = (quiz: QuizItem): QuizItem => ({
+  ...quiz,
+  questions: quiz.questions.slice(0, MAX_QUESTIONS_PER_QUIZ),
+});
+
+const evaluate = (question: QuizQuestion, selected: string[]): AnswerFeedback => {
+  const isCorrect = isCorrectAnswer(question, selected);
   const correctLabels = question.options
     .filter((option) => option.isCorrect)
     .map((option) => option.label);
@@ -73,16 +86,6 @@ const orderQuizzesByRecommendations = (
   return [...prioritized, ...remaining];
 };
 
-const movePrimaryRenalQuizFirst = (quizzes: QuizItem[]) => {
-  const primaryIndex = quizzes.findIndex((item) => item.slug === RENAL_PRIMARY_SLUG);
-  if (primaryIndex <= 0) {
-    return quizzes;
-  }
-
-  const primaryQuiz = quizzes[primaryIndex];
-  return [primaryQuiz, ...quizzes.filter((item) => item.id !== primaryQuiz.id)];
-};
-
 const toRecommendationMap = (recommendation: QuizRecommendationV2Response | null) => {
   const map: Record<string, QuizRecommendationV2Item> = {};
   (recommendation?.recommendations ?? []).forEach((item) => {
@@ -111,61 +114,56 @@ export const useQuizSession = (auth: AuthResponse | null) => {
   const [sessionQuizCursor, setSessionQuizCursor] = useState(0);
   const [isRunCompleted, setIsRunCompleted] = useState(false);
   const [themeCoverage, setThemeCoverage] = useState<QuizThemeCoverage | null>(null);
+  const [levelUpNotice, setLevelUpNotice] = useState<LevelUpNotice | null>(null);
+  const [perfectScoreNotice, setPerfectScoreNotice] = useState<string | null>(null);
+  const [adaptiveLevelDecision, setAdaptiveLevelDecision] = useState<QuizAdaptiveLevelResponse | null>(
+    null,
+  );
 
-  const shuffle = (values: string[]) => {
-    const buffer = [...values];
-    for (let i = buffer.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [buffer[i], buffer[j]] = [buffer[j], buffer[i]];
+  const getPlayCountStorageKey = (patientId: string) => `akacare_quiz_play_counts_${patientId}`;
+
+  const readPlayCounts = (patientId: string) => {
+    try {
+      const raw = window.localStorage.getItem(getPlayCountStorageKey(patientId));
+      if (!raw) {
+        return {} as Record<string, number>;
+      }
+      const parsed = JSON.parse(raw) as Record<string, number>;
+      return Object.entries(parsed).reduce<Record<string, number>>((acc, [quizId, count]) => {
+        acc[quizId] = Number.isFinite(count) && count > 0 ? count : 0;
+        return acc;
+      }, {});
+    } catch {
+      return {};
     }
-
-    return buffer;
   };
 
-  const getNextQuiz = (pool: QuizItem[], patientId: string): QuizItem => {
-    if (pool.length === 1) {
-      return pool[0];
+  const writePlayCounts = (patientId: string, counts: Record<string, number>) => {
+    window.localStorage.setItem(getPlayCountStorageKey(patientId), JSON.stringify(counts));
+  };
+
+  const getNextQuiz = (pool: QuizItem[], patientId: string, currentQuizId?: string): QuizItem => {
+    if (pool.length === 0) {
+      throw new Error('No quiz available');
     }
 
-    const orderKey = `akacare_quiz_order_${patientId}`;
-    const indexKey = `akacare_quiz_order_index_${patientId}`;
-    const poolIds = pool.map((item) => item.id);
-
-    let order: string[] = [];
-    const rawOrder = window.sessionStorage.getItem(orderKey);
-    if (rawOrder) {
-      try {
-        const parsed = JSON.parse(rawOrder) as string[];
-        if (parsed.every((id) => poolIds.includes(id)) && parsed.length === poolIds.length) {
-          order = parsed;
-        }
-      } catch {
-        order = [];
+    const counts = readPlayCounts(patientId);
+    const sorted = [...pool].sort((left, right) => {
+      const leftCount = counts[left.id] ?? 0;
+      const rightCount = counts[right.id] ?? 0;
+      if (leftCount !== rightCount) {
+        return leftCount - rightCount;
       }
-    }
+      return left.title.localeCompare(right.title);
+    });
 
-    if (order.length === 0) {
-      order = shuffle(poolIds);
-      window.sessionStorage.setItem(orderKey, JSON.stringify(order));
-      window.sessionStorage.setItem(indexKey, '0');
-    }
+    return sorted.find((quiz) => quiz.id !== currentQuizId) ?? sorted[0];
+  };
 
-    const rawIndex = window.sessionStorage.getItem(indexKey);
-    const safeIndex = rawIndex ? Number(rawIndex) : 0;
-    const currentIndex = Number.isFinite(safeIndex) ? safeIndex : 0;
-
-    if (currentIndex >= order.length) {
-      const renewed = shuffle(poolIds);
-      window.sessionStorage.setItem(orderKey, JSON.stringify(renewed));
-      window.sessionStorage.setItem(indexKey, '1');
-      const renewedId = renewed[0];
-      return pool.find((item) => item.id === renewedId) ?? pool[0];
-    }
-
-    const selectedId = order[currentIndex];
-    window.sessionStorage.setItem(indexKey, String(currentIndex + 1));
-
-    return pool.find((item) => item.id === selectedId) ?? pool[0];
+  const registerQuizPlay = (patientId: string, quizId: string) => {
+    const counts = readPlayCounts(patientId);
+    counts[quizId] = (counts[quizId] ?? 0) + 1;
+    writePlayCounts(patientId, counts);
   };
 
   const fetchEffectiveQuizzes = async () => {
@@ -174,38 +172,51 @@ export const useQuizSession = (auth: AuthResponse | null) => {
         quizzes: [] as QuizItem[],
         coverage: null as QuizThemeCoverage | null,
         recommendationMap: {} as Record<string, QuizRecommendationV2Item>,
+        adaptiveLevelDecision: null as QuizAdaptiveLevelResponse | null,
       };
     }
 
-    const [quizzesResult, coverageResult, recommendationResult] = await Promise.allSettled([
-      quizApi.list({
-        patientProfile: auth.patient.profile,
-        patientId: auth.patient.id,
-        mainDisease: RENAL_MAIN_DISEASE,
-      }),
+    const [recommendedResult, coverageResult, recommendationResult] = await Promise.allSettled([
+      quizApi.recommended(auth.patient.id, auth.accessToken),
       quizApi.coverage(),
       analysisApi.recommendForPatientV2({
         patientId: auth.patient.id,
         token: auth.accessToken,
-        dominantDisease: RENAL_MAIN_DISEASE,
         limit: RECOMMENDATION_LIMIT,
       }),
     ]);
 
     const coverage = coverageResult.status === 'fulfilled' ? coverageResult.value : null;
-
-    if (quizzesResult.status !== 'fulfilled') {
-      throw quizzesResult.reason;
+    if (recommendedResult.status !== 'fulfilled') {
+      throw recommendedResult.reason;
     }
 
-    const quizzes = quizzesResult.value;
+    const quizzes = recommendedResult.value.recommendations.map(trimQuizQuestions);
     const recommendation =
       recommendationResult.status === 'fulfilled' ? recommendationResult.value : null;
-    const rankedQuizzes = orderQuizzesByRecommendations(quizzes, recommendation);
-    const effectiveQuizzes = movePrimaryRenalQuizFirst(rankedQuizzes);
+    const effectiveQuizzes = orderQuizzesByRecommendations(quizzes, recommendation);
     const recommendationMap = toRecommendationMap(recommendation);
+    const adaptiveLevelDecision: QuizAdaptiveLevelResponse = {
+      currentLevel: recommendedResult.value.currentLevel,
+      recommendedLevel: recommendedResult.value.currentLevel,
+      nextLevel: recommendedResult.value.nextLevel,
+      progressionPercentage: recommendedResult.value.progressionPercentage,
+      perfectScoresAtCurrentLevel: recommendedResult.value.perfectScoresAtCurrentLevel,
+      requiredPerfectScoresForNextLevel: recommendedResult.value.requiredPerfectScoresForNextLevel,
+      remainingPerfectScoresToUnlock: recommendedResult.value.remainingPerfectScoresToUnlock,
+      completedAttempts: 0,
+      overallSuccessRate: 0,
+      perfectScoresByLevel: {},
+      nextObjective: null,
+      rationale: '',
+    };
 
-    return { quizzes: effectiveQuizzes, coverage, recommendationMap };
+    return {
+      quizzes: effectiveQuizzes,
+      coverage,
+      recommendationMap,
+      adaptiveLevelDecision,
+    };
   };
 
   useEffect(() => {
@@ -227,6 +238,9 @@ export const useQuizSession = (auth: AuthResponse | null) => {
         setIsRunCompleted(false);
         setThemeCoverage(null);
         setRecommendationMap({});
+        setLevelUpNotice(null);
+        setPerfectScoreNotice(null);
+        setAdaptiveLevelDecision(null);
         return;
       }
 
@@ -238,9 +252,11 @@ export const useQuizSession = (auth: AuthResponse | null) => {
           quizzes: effectiveQuizzes,
           coverage,
           recommendationMap: nextRecommendationMap,
+          adaptiveLevelDecision: nextAdaptiveLevelDecision,
         } = await fetchEffectiveQuizzes();
         setThemeCoverage(coverage);
         setRecommendationMap(nextRecommendationMap);
+        setAdaptiveLevelDecision(nextAdaptiveLevelDecision);
 
         if (!effectiveQuizzes.length) {
           setQuiz(null);
@@ -283,12 +299,14 @@ export const useQuizSession = (auth: AuthResponse | null) => {
           quizzes: refreshedQuizzes,
           coverage,
           recommendationMap: refreshedRecommendationMap,
+          adaptiveLevelDecision: refreshedAdaptiveLevelDecision,
         } = await fetchEffectiveQuizzes();
         if (refreshedQuizzes.length > 0) {
           pool = refreshedQuizzes;
           setQuizPool(refreshedQuizzes);
           setThemeCoverage(coverage);
           setRecommendationMap(refreshedRecommendationMap);
+          setAdaptiveLevelDecision(refreshedAdaptiveLevelDecision);
         }
       } catch {
         // Fallback to current in-memory pool if refresh fails.
@@ -305,9 +323,9 @@ export const useQuizSession = (auth: AuthResponse | null) => {
 
     const runIds =
       uniqueIds.length > 0
-        ? uniqueIds
+        ? [uniqueIds[0]]
         : hasStarted && auth
-          ? [getNextQuiz(pool, auth.patient.id).id]
+          ? [getNextQuiz(pool, auth.patient.id, quiz?.id).id]
           : quiz
             ? [quiz.id]
             : [pool[0].id];
@@ -320,6 +338,10 @@ export const useQuizSession = (auth: AuthResponse | null) => {
       const runQuiz = pool.find((item) => item.id === runId);
       return sum + (runQuiz?.questions.length ?? 0);
     }, 0);
+
+    if (auth && selectedQuiz?.id) {
+      registerQuizPlay(auth.patient.id, selectedQuiz.id);
+    }
 
     setQuiz(selectedQuiz);
     setSessionQuizIds(runIds);
@@ -334,6 +356,8 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     setAttempt(null);
     setError(null);
     setCorrectAnswersCount(0);
+    setLevelUpNotice(null);
+    setPerfectScoreNotice(null);
   };
 
   const selectQuiz = (quizId: string) => {
@@ -355,6 +379,7 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     setSessionQuizIds([]);
     setSessionQuizCursor(0);
     setIsRunCompleted(false);
+    setPerfectScoreNotice(null);
   };
 
   const toggleOption = (optionCode: string) => {
@@ -428,6 +453,48 @@ export const useQuizSession = (auth: AuthResponse | null) => {
 
         setAttempt(submittedAttempt);
 
+        const totalQuestions = quiz.questions.length;
+        const correctAnswers = quiz.questions.reduce((count, item) => {
+          const selectedValues = answers[item.id] ?? [];
+          if (selectedValues.length === 0) {
+            return count;
+          }
+          return isCorrectAnswer(item, selectedValues) ? count + 1 : count;
+        }, 0);
+        const successRate = totalQuestions > 0 ? correctAnswers / totalQuestions : 0;
+        if (successRate >= 0.999) {
+          setPerfectScoreNotice(
+            `Bravo ! Vous avez reussi ${correctAnswers}/${totalQuestions} sur ce quiz.`,
+          );
+        } else {
+          setPerfectScoreNotice(null);
+        }
+
+        setAdaptiveLevelDecision((previous) => ({
+          currentLevel: submittedAttempt.currentLevel,
+          recommendedLevel: submittedAttempt.currentLevel,
+          nextLevel: submittedAttempt.nextLevel,
+          progressionPercentage: submittedAttempt.progressionPercentage,
+          perfectScoresAtCurrentLevel: submittedAttempt.perfectScoresAtCurrentLevel,
+          requiredPerfectScoresForNextLevel: submittedAttempt.requiredPerfectScoresForNextLevel,
+          remainingPerfectScoresToUnlock: submittedAttempt.remainingPerfectScoresToUnlock,
+          completedAttempts: previous?.completedAttempts ?? 0,
+          overallSuccessRate: previous?.overallSuccessRate ?? 0,
+          perfectScoresByLevel: previous?.perfectScoresByLevel ?? {},
+          nextObjective: submittedAttempt.nextLevel
+            ? `Encore ${submittedAttempt.remainingPerfectScoresToUnlock} quiz parfait(s) à 10/10 pour débloquer le niveau suivant.`
+            : null,
+          rationale: previous?.rationale ?? '',
+        }));
+        if (submittedAttempt.levelChanged && submittedAttempt.previousLevel) {
+          setLevelUpNotice({
+            fromLevel: submittedAttempt.previousLevel,
+            toLevel: submittedAttempt.currentLevel,
+          });
+        } else {
+          setLevelUpNotice(null);
+        }
+
         const hasNextQuiz = sessionQuizCursor < sessionQuizIds.length - 1;
         if (hasNextQuiz) {
           const nextQuizId = sessionQuizIds[sessionQuizCursor + 1];
@@ -471,6 +538,8 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     setTotalQuestionsInRun(0);
     setSessionQuizIds([]);
     setSessionQuizCursor(0);
+    setLevelUpNotice(null);
+    setPerfectScoreNotice(null);
   };
 
   return {
@@ -485,6 +554,9 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     isLoading,
     error,
     attempt,
+    levelUpNotice,
+    perfectScoreNotice,
+    adaptiveLevelDecision,
     isRunCompleted,
     totalQuestionsInRun,
     sessionQuizCursor,

@@ -4,6 +4,7 @@ export interface PatientSummary {
   firstName: string;
   lastName: string;
   profile: string;
+  currentLevel?: string;
 }
 
 export interface AuthResponse {

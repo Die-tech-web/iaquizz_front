@@ -9,6 +9,11 @@ import { QuizStartPage } from '../pages/QuizStartPage';
 import { PrimaryButton } from '../shared/ui/PrimaryButton';
 
 type AppStep = 'start' | 'quiz';
+const LEVEL_LABELS: Record<string, string> = {
+  BEGINNER: 'Débutant',
+  INTERMEDIATE: 'Intermédiaire',
+  ADVANCED: 'Avancé',
+};
 
 function App() {
   const { auth, isAuthenticated, isLoading: authLoading, error: authError, login, logout } = useAuth();
@@ -53,8 +58,21 @@ function App() {
   }
 
   if (quizSession.isRunCompleted && quizSession.attempt) {
+    const attempt = quizSession.attempt;
     const totalQuestions = Math.max(quizSession.totalQuestionsInRun, 1);
-    const noteSur20 = Math.round((quizSession.correctAnswersCount / totalQuestions) * 20 * 10) / 10;
+    const quizCount = quizSession.sessionQuizTotal;
+    const levelUpNotice = quizSession.levelUpNotice;
+    const perfectScoreNotice = quizSession.perfectScoreNotice;
+    const feedbackMessage =
+      attempt.scoreOnTen >= 9
+        ? 'Très bon résultat. Continuez avec ce rythme.'
+        : attempt.scoreOnTen >= 7
+          ? 'Bon résultat. Continuez à renforcer les points clés.'
+          : 'Résultat perfectible. Reprenez calmement les notions essentielles.';
+    const fromLevel = levelUpNotice ? LEVEL_LABELS[levelUpNotice.fromLevel] ?? levelUpNotice.fromLevel : '';
+    const toLevel = levelUpNotice ? LEVEL_LABELS[levelUpNotice.toLevel] ?? levelUpNotice.toLevel : '';
+    const currentLevelLabel = LEVEL_LABELS[attempt.currentLevel] ?? attempt.currentLevel;
+    const nextLevelLabel = attempt.nextLevel ? LEVEL_LABELS[attempt.nextLevel] ?? attempt.nextLevel : null;
 
     return (
       <main className="screen centered-screen">
@@ -71,12 +89,37 @@ function App() {
           </button>
           <h1 className="screen-title">Quiz terminé</h1>
           <p className="screen-subtitle">
-            Score final: {quizSession.correctAnswersCount}/{totalQuestions}
+            Parcours effectué: {quizCount} quiz, {totalQuestions} questions
           </p>
-          <p className="screen-subtitle">Note finale: {noteSur20}/20</p>
+          <p className="screen-subtitle">Score: {attempt.scoreOnTen}/10</p>
+          <p className="screen-subtitle">Niveau actuel: {currentLevelLabel}</p>
+          <p className="screen-subtitle">{feedbackMessage}</p>
           <p className="screen-subtitle">
             Export FHIR: {fhirExport.error ? 'Indisponible' : 'Questionnaire et QuestionnaireResponse générés'}
           </p>
+          {perfectScoreNotice ? (
+            <div className="perfect-score-notice" role="status" aria-live="polite">
+              {perfectScoreNotice}
+            </div>
+          ) : null}
+          {levelUpNotice ? (
+            <div className="level-up-notice" role="status" aria-live="polite">
+              <p className="level-up-notice__title">Félicitations</p>
+              <p className="level-up-notice__text">
+                {attempt.congratulationMessage ??
+                  `Vous passez du niveau ${fromLevel} au niveau ${toLevel}.`}
+              </p>
+            </div>
+          ) : (
+            <div className="level-progress-notice" role="status" aria-live="polite">
+              <p className="level-progress-notice__title">Progression: {attempt.progressionPercentage}%</p>
+              <p className="level-progress-notice__text">
+                {nextLevelLabel
+                  ? `Encore ${attempt.remainingPerfectScoresToUnlock} quiz parfait(s) à 10/10 pour débloquer le niveau ${nextLevelLabel}.`
+                  : 'Objectif atteint: niveau Avancé validé.'}
+              </p>
+            </div>
+          )}
           {fhirExport.isLoading ? <p className="fhir-loading">Chargement export FHIR...</p> : null}
           {fhirExport.error ? <p className="error-text">{fhirExport.error}</p> : null}
           <MedicalNotice variant="end" />
@@ -99,6 +142,7 @@ function App() {
         quiz={quizSession.quiz}
         quizzes={quizSession.quizPool}
         recommendationMap={quizSession.recommendationMap}
+        adaptiveLevelDecision={quizSession.adaptiveLevelDecision}
         patientName={patientName}
         onSelectQuiz={quizSession.selectQuiz}
         onLogout={logout}
@@ -126,6 +170,8 @@ function App() {
         quizSession.currentIndex >= quizSession.quiz.questions.length - 1
       }
       question={quizSession.currentQuestion}
+      levelUpNotice={quizSession.levelUpNotice}
+      perfectScoreNotice={quizSession.perfectScoreNotice}
       selectedValues={quizSession.draftSelection}
       feedback={quizSession.feedback}
       isLoading={quizSession.isLoading}

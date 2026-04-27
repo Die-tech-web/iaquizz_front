@@ -144,6 +144,8 @@ function App() {
         recommendationMap={quizSession.recommendationMap}
         adaptiveLevelDecision={quizSession.adaptiveLevelDecision}
         patientName={patientName}
+        selectedLanguage={quizSession.selectedLanguage}
+        onLanguageChange={quizSession.changeLanguage}
         onSelectQuiz={quizSession.selectQuiz}
         onLogout={logout}
         onStart={(quizIds) => {
@@ -170,6 +172,7 @@ function App() {
         quizSession.currentIndex >= quizSession.quiz.questions.length - 1
       }
       question={quizSession.currentQuestion}
+      language={quizSession.selectedLanguage}
       levelUpNotice={quizSession.levelUpNotice}
       perfectScoreNotice={quizSession.perfectScoreNotice}
       selectedValues={quizSession.draftSelection}

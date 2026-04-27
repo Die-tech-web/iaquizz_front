@@ -72,6 +72,23 @@ export const httpClient = {
 
     return parseResponse<TResponse>(response);
   },
+
+  async patch<TRequest, TResponse>(
+    path: string,
+    body: TRequest,
+    options?: { token?: string },
+  ): Promise<TResponse> {
+    const response = await fetch(makeUrl(path), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options?.token ? { Authorization: `Bearer ${options.token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+
+    return parseResponse<TResponse>(response);
+  },
 };
 
 export { HttpError };

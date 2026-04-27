@@ -1,3 +1,5 @@
+import type { PatientLanguage } from '../../../shared/lib/i18n/language';
+
 export interface PatientSummary {
   id: string;
   email: string;
@@ -5,6 +7,7 @@ export interface PatientSummary {
   lastName: string;
   profile: string;
   currentLevel?: string;
+  preferredLanguage: PatientLanguage;
 }
 
 export interface AuthResponse {

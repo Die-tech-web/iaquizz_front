@@ -1,0 +1,31 @@
+<svg width="512" height="320" viewBox="0 0 512 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="320" rx="28" fill="#EAF8FC"/>
+  <rect x="22" y="22" width="468" height="276" rx="20" fill="#F8FDFE" stroke="#11B5D2" stroke-width="4"/>
+
+  <!-- clinic background -->
+  <rect x="72" y="84" width="368" height="178" rx="16" fill="#E3F1F6"/>
+  <rect x="92" y="100" width="112" height="74" rx="10" fill="#D2E8F1"/>
+  <rect x="322" y="102" width="94" height="64" rx="10" fill="#D2E8F1"/>
+
+  <!-- doctor -->
+  <circle cx="312" cy="144" r="20" fill="#FFD6BF"/>
+  <rect x="290" y="164" width="46" height="58" rx="12" fill="#FFFFFF"/>
+  <path d="M301 174H326" stroke="#9ACAD8" stroke-width="6" stroke-linecap="round"/>
+  <path d="M307 188H320" stroke="#9ACAD8" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- patient showing leg cramp -->
+  <circle cx="192" cy="154" r="20" fill="#FFD6BF"/>
+  <rect x="168" y="174" width="52" height="54" rx="12" fill="#57C1D9"/>
+  <path d="M206 228L220 246" stroke="#4D6570" stroke-width="8" stroke-linecap="round"/>
+  <path d="M176 228L162 246" stroke="#4D6570" stroke-width="8" stroke-linecap="round"/>
+  <path d="M152 214L164 202" stroke="#F25283" stroke-width="5" stroke-linecap="round"/>
+  <path d="M164 214L176 202" stroke="#F25283" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- report action (phone) -->
+  <rect x="232" y="174" width="22" height="34" rx="5" fill="#FFFFFF" stroke="#9BC8D6" stroke-width="2"/>
+  <circle cx="243" cy="202" r="2" fill="#9BC8D6"/>
+
+  <!-- positive indicator -->
+  <circle cx="410" cy="70" r="16" fill="#3FBA8A"/>
+  <path d="M402 70L408 76L419 64" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

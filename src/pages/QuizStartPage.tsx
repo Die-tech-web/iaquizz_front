@@ -4,6 +4,12 @@ import type {
   QuizItem,
   QuizRecommendationV2Item,
 } from '../entities/quiz/model/types';
+import {
+  getLanguageLabel,
+  PATIENT_LANGUAGES,
+  type PatientLanguage,
+} from '../shared/lib/i18n/language';
+import { expandMedicalAbbreviations } from '../shared/lib/quiz/expandMedicalAbbreviations';
 import { getThemeLabel } from '../shared/lib/quiz/themeLabels';
 import { PrimaryButton } from '../shared/ui/PrimaryButton';
 import { MedicalNotice } from './MedicalNotice';
@@ -14,7 +20,9 @@ interface QuizStartPageProps {
   recommendationMap: Record<string, QuizRecommendationV2Item>;
   adaptiveLevelDecision: QuizAdaptiveLevelResponse | null;
   patientName: string;
+  selectedLanguage: PatientLanguage;
   onStart: (quizIds: string[]) => void;
+  onLanguageChange: (language: PatientLanguage) => void;
   onSelectQuiz: (quizId: string) => void;
   onLogout: () => void;
 }
@@ -46,14 +54,22 @@ const normalizeText = (value: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 
+const normalizeMediaId = (value?: string | null) =>
+  (value ?? '')
+    .toLowerCase()
+    .replace(/^https?:\/\/[^/]+/i, '')
+    .replace(/[?#].*$/, '')
+    .trim();
+
 const getQuestionSignature = (quiz: QuizItem) =>
   quiz.questions.map((question) => {
     const text = normalizeText(question.text);
+    const questionImage = normalizeMediaId(question.imageUrl);
     const options = question.options
-      .map((option) => normalizeText(option.label))
+      .map((option) => `${normalizeText(option.label)}:${normalizeMediaId(option.imageUrl)}`)
       .sort()
       .join('|');
-    return `${text}::${options}`;
+    return `${text}::${questionImage}::${options}`;
   });
 
 const filterQuizzesWithoutQuestionOverlap = (orderedQuizzes: QuizItem[]) => {
@@ -80,7 +96,9 @@ export function QuizStartPage({
   recommendationMap,
   adaptiveLevelDecision,
   patientName,
+  selectedLanguage,
   onStart,
+  onLanguageChange,
   onSelectQuiz,
   onLogout,
 }: QuizStartPageProps) {
@@ -178,7 +196,9 @@ export function QuizStartPage({
             <div className="start-intro">
               <p className="screen-subtitle">Bonjour {patientName}</p>
               <h1 className="screen-title">Démarrer votre Quiz</h1>
-              <p className="screen-subtitle">{quiz.title}</p>
+              <p className="screen-subtitle">
+                {expandMedicalAbbreviations(quiz.title, { language: selectedLanguage })}
+              </p>
               <div className="quiz-current-themes">
                 {(quiz.themes ?? []).map((theme) => (
                   <span key={theme} className="theme-badge">
@@ -222,6 +242,24 @@ export function QuizStartPage({
                   : 'Objectif atteint: niveau Avancé validé.'}
               </p>
             </section>
+
+            <div className="theme-select-wrap">
+              <label htmlFor="language-select" className="theme-select-label">
+                Langue du quiz
+              </label>
+              <select
+                id="language-select"
+                className="theme-select"
+                value={selectedLanguage}
+                onChange={(event) => onLanguageChange(event.target.value as PatientLanguage)}
+              >
+                {PATIENT_LANGUAGES.map((language) => (
+                  <option key={language} value={language}>
+                    {getLanguageLabel(language)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="theme-select-wrap">
               <label htmlFor="theme-select" className="theme-select-label">
@@ -270,7 +308,9 @@ export function QuizStartPage({
                     className={`recommendation-card${item.id === quiz.id ? ' recommendation-card--active' : ''}`}
                     onClick={() => onSelectQuiz(item.id)}
                   >
-                    <span className="recommendation-card__title">{item.title}</span>
+                    <span className="recommendation-card__title">
+                      {expandMedicalAbbreviations(item.title, { language: selectedLanguage })}
+                    </span>
                     <span className="recommendation-card__meta">
                       Niveau: {itemLevelLabel}
                       {itemRecommendation
@@ -279,7 +319,9 @@ export function QuizStartPage({
                     </span>
                     {itemRecommendation?.reasons?.[0] ? (
                       <span className="recommendation-card__reason">
-                        {itemRecommendation.reasons[0]}
+                        {expandMedicalAbbreviations(itemRecommendation.reasons[0], {
+                          language: selectedLanguage,
+                        })}
                       </span>
                     ) : (
                       <span className="recommendation-card__reason recommendation-card__reason--muted">

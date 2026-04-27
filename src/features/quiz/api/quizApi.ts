@@ -6,12 +6,14 @@ import type {
   QuizThemeCoverage,
   SubmittedAnswer,
 } from '../../../entities/quiz/model/types';
+import type { PatientLanguage } from '../../../shared/lib/i18n/language';
 import { httpClient } from '../../../shared/lib/http/httpClient';
 
 interface SubmitQuizPayload {
   patientId: string;
   quizId: string;
   submittedBy: string;
+  language: PatientLanguage;
   answers: SubmittedAnswer[];
 }
 
@@ -19,6 +21,7 @@ interface QuizFilters {
   patientProfile?: string;
   patientId?: string;
   mainDisease?: string;
+  lang?: PatientLanguage;
 }
 
 export const quizApi = {
@@ -28,6 +31,7 @@ export const quizApi = {
         patientProfile: filters.patientProfile,
         patientId: filters.patientId,
         mainDisease: filters.mainDisease,
+        lang: filters.lang,
       },
     });
   },
@@ -43,13 +47,14 @@ export const quizApi = {
     );
   },
 
-  recommended(patientId: string, token: string, mainDisease?: string) {
+  recommended(patientId: string, token: string, mainDisease?: string, lang?: PatientLanguage) {
     return httpClient.get<QuizRecommendedResponse>(
       `/quizzes/recommended/patient/${patientId}`,
       {
         token,
         query: {
           mainDisease,
+          lang,
         },
       },
     );

@@ -10,8 +10,14 @@ import type {
   QuizThemeCoverage,
   SubmittedAnswer,
 } from '../../../entities/quiz/model/types';
+import { patientApi } from '../../patient/api/patientApi';
 import { analysisApi } from '../../analysis/api/analysisApi';
 import { quizApi } from '../api/quizApi';
+import {
+  DEFAULT_PATIENT_LANGUAGE,
+  type PatientLanguage,
+  resolvePatientLanguage,
+} from '../../../shared/lib/i18n/language';
 
 interface AnswerFeedback {
   isCorrect: boolean;
@@ -119,8 +125,12 @@ export const useQuizSession = (auth: AuthResponse | null) => {
   const [adaptiveLevelDecision, setAdaptiveLevelDecision] = useState<QuizAdaptiveLevelResponse | null>(
     null,
   );
+  const [selectedLanguage, setSelectedLanguage] = useState<PatientLanguage>(
+    DEFAULT_PATIENT_LANGUAGE,
+  );
 
   const getPlayCountStorageKey = (patientId: string) => `akacare_quiz_play_counts_${patientId}`;
+  const getLanguageStorageKey = (patientId: string) => `akacare_quiz_lang_${patientId}`;
 
   const readPlayCounts = (patientId: string) => {
     try {
@@ -140,6 +150,20 @@ export const useQuizSession = (auth: AuthResponse | null) => {
 
   const writePlayCounts = (patientId: string, counts: Record<string, number>) => {
     window.localStorage.setItem(getPlayCountStorageKey(patientId), JSON.stringify(counts));
+  };
+
+  const readStoredLanguage = (patientId: string, fallbackLanguage?: string) => {
+    const fallback = resolvePatientLanguage(fallbackLanguage);
+    try {
+      const raw = window.localStorage.getItem(getLanguageStorageKey(patientId));
+      return resolvePatientLanguage(raw ?? fallback);
+    } catch {
+      return fallback;
+    }
+  };
+
+  const writeStoredLanguage = (patientId: string, language: PatientLanguage) => {
+    window.localStorage.setItem(getLanguageStorageKey(patientId), language);
   };
 
   const getNextQuiz = (pool: QuizItem[], patientId: string, currentQuizId?: string): QuizItem => {
@@ -166,7 +190,7 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     writePlayCounts(patientId, counts);
   };
 
-  const fetchEffectiveQuizzes = async () => {
+  const fetchEffectiveQuizzes = async (language: PatientLanguage) => {
     if (!auth) {
       return {
         quizzes: [] as QuizItem[],
@@ -177,7 +201,7 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     }
 
     const [recommendedResult, coverageResult, recommendationResult] = await Promise.allSettled([
-      quizApi.recommended(auth.patient.id, auth.accessToken),
+      quizApi.recommended(auth.patient.id, auth.accessToken, undefined, language),
       quizApi.coverage(),
       analysisApi.recommendForPatientV2({
         patientId: auth.patient.id,
@@ -220,6 +244,19 @@ export const useQuizSession = (auth: AuthResponse | null) => {
   };
 
   useEffect(() => {
+    if (!auth) {
+      setSelectedLanguage(DEFAULT_PATIENT_LANGUAGE);
+      return;
+    }
+
+    const preferredLanguage = readStoredLanguage(
+      auth.patient.id,
+      auth.patient.preferredLanguage,
+    );
+    setSelectedLanguage(preferredLanguage);
+  }, [auth]);
+
+  useEffect(() => {
     const load = async () => {
       if (!auth) {
         setQuizPool([]);
@@ -241,6 +278,7 @@ export const useQuizSession = (auth: AuthResponse | null) => {
         setLevelUpNotice(null);
         setPerfectScoreNotice(null);
         setAdaptiveLevelDecision(null);
+        setSelectedLanguage(DEFAULT_PATIENT_LANGUAGE);
         return;
       }
 
@@ -253,7 +291,7 @@ export const useQuizSession = (auth: AuthResponse | null) => {
           coverage,
           recommendationMap: nextRecommendationMap,
           adaptiveLevelDecision: nextAdaptiveLevelDecision,
-        } = await fetchEffectiveQuizzes();
+        } = await fetchEffectiveQuizzes(selectedLanguage);
         setThemeCoverage(coverage);
         setRecommendationMap(nextRecommendationMap);
         setAdaptiveLevelDecision(nextAdaptiveLevelDecision);
@@ -280,7 +318,7 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     };
 
     void load();
-  }, [auth]);
+  }, [auth, selectedLanguage]);
 
   const currentQuestion = useMemo(() => {
     if (!quiz) {
@@ -300,7 +338,7 @@ export const useQuizSession = (auth: AuthResponse | null) => {
           coverage,
           recommendationMap: refreshedRecommendationMap,
           adaptiveLevelDecision: refreshedAdaptiveLevelDecision,
-        } = await fetchEffectiveQuizzes();
+        } = await fetchEffectiveQuizzes(selectedLanguage);
         if (refreshedQuizzes.length > 0) {
           pool = refreshedQuizzes;
           setQuizPool(refreshedQuizzes);
@@ -382,6 +420,38 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     setPerfectScoreNotice(null);
   };
 
+  const changeLanguage = (language: PatientLanguage) => {
+    const resolvedLanguage = resolvePatientLanguage(language);
+    if (resolvedLanguage === selectedLanguage) {
+      return;
+    }
+
+    setSelectedLanguage(resolvedLanguage);
+    setHasStarted(false);
+    setCurrentIndex(0);
+    setDraftSelection([]);
+    setAnswers({});
+    setFeedback(null);
+    setAttempt(null);
+    setError(null);
+    setCorrectAnswersCount(0);
+    setTotalQuestionsInRun(0);
+    setSessionQuizIds([]);
+    setSessionQuizCursor(0);
+    setIsRunCompleted(false);
+    setLevelUpNotice(null);
+    setPerfectScoreNotice(null);
+
+    if (!auth) {
+      return;
+    }
+
+    writeStoredLanguage(auth.patient.id, resolvedLanguage);
+    void patientApi
+      .updatePreferredLanguage(auth.patient.id, resolvedLanguage, auth.accessToken)
+      .catch(() => undefined);
+  };
+
   const toggleOption = (optionCode: string) => {
     if (!currentQuestion || feedback) {
       return;
@@ -422,6 +492,7 @@ export const useQuizSession = (auth: AuthResponse | null) => {
         patientId: auth.patient.id,
         quizId: quiz.id,
         submittedBy: 'web-akacare-front',
+        language: selectedLanguage,
         answers: payloadAnswers,
       },
       auth.accessToken,
@@ -557,12 +628,14 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     levelUpNotice,
     perfectScoreNotice,
     adaptiveLevelDecision,
+    selectedLanguage,
     isRunCompleted,
     totalQuestionsInRun,
     sessionQuizCursor,
     sessionQuizTotal: sessionQuizIds.length || 1,
     correctAnswersCount,
     start,
+    changeLanguage,
     selectQuiz,
     toggleOption,
     validateCurrentAnswer,

@@ -1,26 +1,31 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-
-const DEFAULT_LANG = 'fr-FR';
+import {
+  getSpeechSynthesisLanguage,
+  type PatientLanguage,
+} from '../i18n/language';
 
 const normalize = (text: string) => text.replace(/\s+/g, ' ').trim();
 
-const pickFrenchVoice = (voices: SpeechSynthesisVoice[]) => {
+const pickVoiceForLanguage = (voices: SpeechSynthesisVoice[], language: string) => {
   if (!voices.length) {
     return null;
   }
 
+  const normalizedLanguage = language.toLowerCase();
+  const prefix = normalizedLanguage.slice(0, 2);
   return (
-    voices.find((voice) => voice.lang.toLowerCase() === DEFAULT_LANG.toLowerCase()) ??
-    voices.find((voice) => voice.lang.toLowerCase().startsWith('fr')) ??
+    voices.find((voice) => voice.lang.toLowerCase() === normalizedLanguage) ??
+    voices.find((voice) => voice.lang.toLowerCase().startsWith(prefix)) ??
     null
   );
 };
 
-export const useTextToSpeech = () => {
+export const useTextToSpeech = (language: PatientLanguage) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [activeText, setActiveText] = useState<string | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const speechLanguage = getSpeechSynthesisLanguage(language);
 
   useEffect(() => {
     const supported =
@@ -78,12 +83,12 @@ export const useTextToSpeech = () => {
       synth.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
-      const voice = pickFrenchVoice(synth.getVoices());
+      const voice = pickVoiceForLanguage(synth.getVoices(), speechLanguage);
       if (voice) {
         utterance.voice = voice;
         utterance.lang = voice.lang;
       } else {
-        utterance.lang = DEFAULT_LANG;
+        utterance.lang = speechLanguage;
       }
 
       utterance.rate = 0.95;
@@ -111,7 +116,7 @@ export const useTextToSpeech = () => {
       setIsSpeaking(true);
       synth.speak(utterance);
     },
-    [isSupported],
+    [isSupported, speechLanguage],
   );
 
   const toggleSpeak = useCallback(

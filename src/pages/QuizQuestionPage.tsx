@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import type { QuizQuestion } from '../entities/quiz/model/types';
+import type { PatientLanguage } from '../shared/lib/i18n/language';
+import { expandMedicalAbbreviations } from '../shared/lib/quiz/expandMedicalAbbreviations';
 import { useTextToSpeech } from '../shared/lib/tts/useTextToSpeech';
 import { PrimaryButton } from '../shared/ui/PrimaryButton';
 
@@ -8,6 +10,7 @@ interface QuizQuestionPageProps {
   progressTotal: number;
   isFinalStep: boolean;
   question: QuizQuestion;
+  language: PatientLanguage;
   levelUpNotice?: { fromLevel: string; toLevel: string } | null;
   perfectScoreNotice?: string | null;
   selectedValues: string[];
@@ -24,6 +27,7 @@ export function QuizQuestionPage({
   progressTotal,
   isFinalStep,
   question,
+  language,
   levelUpNotice,
   perfectScoreNotice,
   selectedValues,
@@ -49,12 +53,24 @@ export function QuizQuestionPage({
     isSpeaking,
     stop,
     toggleSpeak,
-  } = useTextToSpeech();
-  const displayQuestionText = question.text
+  } = useTextToSpeech(language);
+  const canonicalQuestionText = question.text
     .replace(/\(Quiz\s*\d+\)\s*$/i, '')
     .replace(/\s+\?/g, '?')
     .trim();
-  const speechText = (question.ttsText ?? question.audioText ?? displayQuestionText).trim();
+  const promptQuestionText = (question.promptText ?? '')
+    .replace(/\(Quiz\s*\d+\)\s*$/i, '')
+    .replace(/\s+\?/g, '?')
+    .trim();
+  const displayQuestionText = expandMedicalAbbreviations(promptQuestionText || canonicalQuestionText, {
+    language,
+  });
+  const hasVisualOptions = question.options.some((option) => Boolean(option.imageUrl));
+  const isImageOnlyQuestion = !promptQuestionText && hasVisualOptions;
+  const speechText = expandMedicalAbbreviations(
+    (question.ttsText ?? question.audioText ?? displayQuestionText).trim(),
+    { language },
+  );
 
   useEffect(() => {
     stop();
@@ -90,6 +106,23 @@ export function QuizQuestionPage({
         ) : null}
 
         <h1 className="question-title">{displayQuestionText}</h1>
+        {isImageOnlyQuestion ? (
+          <p className="question-instruction">Choisissez l&apos;image la plus adaptée.</p>
+        ) : null}
+
+        {question.imageUrl ? (
+          <figure className="question-visual">
+            <img
+              src={question.imageUrl}
+              alt={expandMedicalAbbreviations(question.imageAlt ?? 'Illustration de la question', {
+                language,
+              })}
+              className="question-visual__image"
+              loading="lazy"
+            />
+          </figure>
+        ) : null}
+
         <div className="question-audio">
           <button
             type="button"
@@ -120,18 +153,38 @@ export function QuizQuestionPage({
           ) : null}
         </div>
 
-        <div className="answers-list">
+        <div className={`answers-list${hasVisualOptions ? ' answers-list--image' : ''}`}>
           {question.options.map((option) => {
             const selected = selectedValues.includes(option.code);
+            const optionLabel = expandMedicalAbbreviations(option.label, { language });
+            const optionImageAlt = expandMedicalAbbreviations(option.imageAlt ?? option.label, {
+              language,
+            });
             return (
               <button
                 key={option.code}
                 type="button"
-                className={`answer-card${selected ? ' answer-card--selected' : ''}`}
+                className={`answer-card${selected ? ' answer-card--selected' : ''}${option.imageUrl ? ' answer-card--image' : ''}`}
                 onClick={() => onSelect(option.code)}
                 disabled={Boolean(feedback)}
+                aria-label={optionLabel}
               >
-                {option.label}
+                {option.imageUrl ? (
+                  <span className="answer-card__image-wrap">
+                    <img
+                      src={option.imageUrl}
+                      alt={optionImageAlt}
+                      className="answer-card__image"
+                      loading="lazy"
+                    />
+                  </span>
+                ) : null}
+
+                {option.imageUrl ? (
+                  <span className="sr-only">{optionLabel}</span>
+                ) : (
+                  <span className="answer-card__label">{optionLabel}</span>
+                )}
               </button>
             );
           })}
@@ -149,7 +202,9 @@ export function QuizQuestionPage({
             <p className="feedback-title">
               {feedback.isCorrect ? 'Bonne réponse.' : 'Mauvaise réponse.'}
             </p>
-            <p className="feedback-text">{feedback.explanation}</p>
+            <p className="feedback-text">
+              {expandMedicalAbbreviations(feedback.explanation, { language })}
+            </p>
             <PrimaryButton onClick={onNext} disabled={isLoading}>
               {isFinalStep ? 'Terminer' : 'Suivant'}
             </PrimaryButton>

@@ -1,17 +1,25 @@
+import type { PatientLanguage } from '../../../shared/lib/i18n/language';
+
 export type QuizQuestionType = 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'BOOLEAN';
 
 export interface QuizOption {
   code: string;
   label: string;
   isCorrect?: boolean;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
 }
 
 export interface QuizQuestion {
   id: string;
   linkId: string;
   text: string;
+  promptText?: string | null;
   ttsText?: string;
   audioText?: string;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  isSensitiveMedical?: boolean;
   type: QuizQuestionType;
   options: QuizOption[];
   weight: number;
@@ -34,6 +42,7 @@ export interface SubmittedAnswer {
 
 export interface QuizAttemptResponse {
   id: string;
+  language: PatientLanguage;
   score: number;
   maxScore: number;
   scoreOnTen: number;

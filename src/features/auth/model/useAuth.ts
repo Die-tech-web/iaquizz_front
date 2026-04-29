@@ -11,7 +11,17 @@ const readStoredAuth = (): AuthResponse | null => {
   }
 
   try {
-    return JSON.parse(raw) as AuthResponse;
+    const parsed = JSON.parse(raw) as Partial<AuthResponse>;
+    if (
+      !parsed ||
+      typeof parsed !== 'object' ||
+      !('role' in parsed) ||
+      (parsed.role !== 'PATIENT' && parsed.role !== 'HEALTH_PROFESSIONAL')
+    ) {
+      window.sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      return null;
+    }
+    return parsed as AuthResponse;
   } catch {
     window.sessionStorage.removeItem(AUTH_STORAGE_KEY);
     return null;

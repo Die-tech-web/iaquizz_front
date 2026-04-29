@@ -46,6 +46,8 @@ export interface QuizAttemptResponse {
   score: number;
   maxScore: number;
   scoreOnTen: number;
+  correctAnswersCount?: number;
+  totalQuestionsCount?: number;
   status: string;
   completedAt: string;
   levelAtAttempt: string;
@@ -58,6 +60,28 @@ export interface QuizAttemptResponse {
   levelChanged: boolean;
   previousLevel: string | null;
   congratulationMessage: string | null;
+}
+
+export interface QuizHistoryAnswer {
+  questionId: string;
+  questionText: string;
+  selectedCodes: string[];
+  selectedLabels: string[];
+  correctCodes: string[];
+  correctLabels: string[];
+  isCorrect: boolean;
+}
+
+export interface QuizHistoryItem {
+  attemptId: string;
+  quizId: string;
+  quizTitle: string;
+  language: PatientLanguage;
+  savedAt: string;
+  completedAt: string | null;
+  scoreOnTen: number;
+  levelAtAttempt: string;
+  answers: QuizHistoryAnswer[];
 }
 
 export interface QuizThemeCoverageItem {

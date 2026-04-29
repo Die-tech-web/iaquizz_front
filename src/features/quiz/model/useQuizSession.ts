@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { AuthResponse } from '../../../entities/auth/model/types';
+import type { PatientAuthResponse } from '../../../entities/auth/model/types';
 import type {
   QuizAdaptiveLevelResponse,
   QuizAttemptResponse,
+  QuizHistoryItem,
   QuizItem,
   QuizRecommendationV2Item,
   QuizRecommendationV2Response,
@@ -100,7 +101,7 @@ const toRecommendationMap = (recommendation: QuizRecommendationV2Response | null
   return map;
 };
 
-export const useQuizSession = (auth: AuthResponse | null) => {
+export const useQuizSession = (auth: PatientAuthResponse | null) => {
   const [quizPool, setQuizPool] = useState<QuizItem[]>([]);
   const [recommendationMap, setRecommendationMap] = useState<
     Record<string, QuizRecommendationV2Item>
@@ -125,6 +126,12 @@ export const useQuizSession = (auth: AuthResponse | null) => {
   const [adaptiveLevelDecision, setAdaptiveLevelDecision] = useState<QuizAdaptiveLevelResponse | null>(
     null,
   );
+  const [savedHistory, setSavedHistory] = useState<QuizHistoryItem[]>([]);
+  const [isSavingAttempt, setIsSavingAttempt] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [saveAttemptError, setSaveAttemptError] = useState<string | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [isCurrentAttemptSaved, setIsCurrentAttemptSaved] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<PatientLanguage>(
     DEFAULT_PATIENT_LANGUAGE,
   );
@@ -278,6 +285,12 @@ export const useQuizSession = (auth: AuthResponse | null) => {
         setLevelUpNotice(null);
         setPerfectScoreNotice(null);
         setAdaptiveLevelDecision(null);
+        setSavedHistory([]);
+        setIsSavingAttempt(false);
+        setIsHistoryLoading(false);
+        setSaveAttemptError(null);
+        setHistoryError(null);
+        setIsCurrentAttemptSaved(false);
         setSelectedLanguage(DEFAULT_PATIENT_LANGUAGE);
         return;
       }
@@ -310,6 +323,10 @@ export const useQuizSession = (auth: AuthResponse | null) => {
         setSessionQuizIds([]);
         setSessionQuizCursor(0);
         setIsRunCompleted(false);
+        setSavedHistory([]);
+        setSaveAttemptError(null);
+        setHistoryError(null);
+        setIsCurrentAttemptSaved(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Chargement quiz impossible.');
       } finally {
@@ -396,6 +413,9 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     setCorrectAnswersCount(0);
     setLevelUpNotice(null);
     setPerfectScoreNotice(null);
+    setSaveAttemptError(null);
+    setHistoryError(null);
+    setIsCurrentAttemptSaved(false);
   };
 
   const selectQuiz = (quizId: string) => {
@@ -418,6 +438,9 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     setSessionQuizCursor(0);
     setIsRunCompleted(false);
     setPerfectScoreNotice(null);
+    setSaveAttemptError(null);
+    setHistoryError(null);
+    setIsCurrentAttemptSaved(false);
   };
 
   const changeLanguage = (language: PatientLanguage) => {
@@ -441,6 +464,9 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     setIsRunCompleted(false);
     setLevelUpNotice(null);
     setPerfectScoreNotice(null);
+    setSaveAttemptError(null);
+    setHistoryError(null);
+    setIsCurrentAttemptSaved(false);
 
     if (!auth) {
       return;
@@ -507,10 +533,17 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     const isLastQuestion = currentIndex >= quiz.questions.length - 1;
 
     if (isLastQuestion) {
+      const mergedAnswers: Record<string, string[]> = {
+        ...answers,
+      };
+      if (!mergedAnswers[currentQuestion.id]?.length && draftSelection.length > 0) {
+        mergedAnswers[currentQuestion.id] = draftSelection;
+      }
+
       const payloadAnswers: SubmittedAnswer[] = quiz.questions
         .map((question) => ({
           questionId: question.id,
-          value: answers[question.id] ?? [],
+          value: mergedAnswers[question.id] ?? [],
         }))
         .filter((item) => item.value.length > 0);
 
@@ -522,16 +555,33 @@ export const useQuizSession = (auth: AuthResponse | null) => {
           return;
         }
 
-        setAttempt(submittedAttempt);
-
-        const totalQuestions = quiz.questions.length;
-        const correctAnswers = quiz.questions.reduce((count, item) => {
-          const selectedValues = answers[item.id] ?? [];
+        const localCorrectAnswers = quiz.questions.reduce((count, item) => {
+          const selectedValues = mergedAnswers[item.id] ?? [];
           if (selectedValues.length === 0) {
             return count;
           }
           return isCorrectAnswer(item, selectedValues) ? count + 1 : count;
         }, 0);
+        const localTotalQuestions = Math.max(quiz.questions.length, 1);
+        const localScoreOnTen = Number(((localCorrectAnswers / localTotalQuestions) * 10).toFixed(2));
+        const resolvedScoreOnTen =
+          submittedAttempt.scoreOnTen === 0 && localCorrectAnswers > 0
+            ? localScoreOnTen
+            : submittedAttempt.scoreOnTen;
+
+        setAttempt({
+          ...submittedAttempt,
+          scoreOnTen: resolvedScoreOnTen,
+          correctAnswersCount:
+            submittedAttempt.correctAnswersCount ?? localCorrectAnswers,
+          totalQuestionsCount:
+            submittedAttempt.totalQuestionsCount ?? localTotalQuestions,
+        });
+        setIsCurrentAttemptSaved(false);
+        setSaveAttemptError(null);
+
+        const totalQuestions = quiz.questions.length;
+        const correctAnswers = localCorrectAnswers;
         const successRate = totalQuestions > 0 ? correctAnswers / totalQuestions : 0;
         if (successRate >= 0.999) {
           setPerfectScoreNotice(
@@ -611,6 +661,59 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     setSessionQuizCursor(0);
     setLevelUpNotice(null);
     setPerfectScoreNotice(null);
+    setSaveAttemptError(null);
+    setHistoryError(null);
+    setIsCurrentAttemptSaved(false);
+  };
+
+  const saveCurrentAttempt = async () => {
+    if (!auth || !attempt) {
+      return null;
+    }
+
+    if (isCurrentAttemptSaved) {
+      return null;
+    }
+
+    setIsSavingAttempt(true);
+    setSaveAttemptError(null);
+    try {
+      const saved = await quizApi.saveAttempt(
+        attempt.id,
+        { patientId: auth.patient.id },
+        auth.accessToken,
+      );
+      setIsCurrentAttemptSaved(true);
+      setSavedHistory((previous) => {
+        const withoutCurrent = previous.filter((item) => item.attemptId !== saved.attemptId);
+        return [saved, ...withoutCurrent];
+      });
+      return saved;
+    } catch (err) {
+      setSaveAttemptError(err instanceof Error ? err.message : 'Sauvegarde impossible.');
+      return null;
+    } finally {
+      setIsSavingAttempt(false);
+    }
+  };
+
+  const loadSavedAttempts = async (limit = 50) => {
+    if (!auth) {
+      return [];
+    }
+
+    setIsHistoryLoading(true);
+    setHistoryError(null);
+    try {
+      const history = await quizApi.listSavedAttempts(auth.patient.id, auth.accessToken, limit);
+      setSavedHistory(history);
+      return history;
+    } catch (err) {
+      setHistoryError(err instanceof Error ? err.message : 'Chargement historique impossible.');
+      return [];
+    } finally {
+      setIsHistoryLoading(false);
+    }
   };
 
   return {
@@ -627,6 +730,12 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     attempt,
     levelUpNotice,
     perfectScoreNotice,
+    savedHistory,
+    isSavingAttempt,
+    isHistoryLoading,
+    saveAttemptError,
+    historyError,
+    isCurrentAttemptSaved,
     adaptiveLevelDecision,
     selectedLanguage,
     isRunCompleted,
@@ -641,5 +750,7 @@ export const useQuizSession = (auth: AuthResponse | null) => {
     validateCurrentAnswer,
     goNext,
     backToModules,
+    saveCurrentAttempt,
+    loadSavedAttempts,
   };
 };

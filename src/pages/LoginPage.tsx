@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import heroImage from '../assets/hero.png';
 import type { LoginPayload } from '../entities/auth/model/types';
 import { PrimaryButton } from '../shared/ui/PrimaryButton';
@@ -12,6 +12,14 @@ interface LoginPageProps {
 export function LoginPage({ isLoading, error, onLogin }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  useEffect(() => {
+    document.body.classList.add('login-no-scroll');
+    return () => {
+      document.body.classList.remove('login-no-scroll');
+    };
+  }, []);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -50,13 +58,24 @@ export function LoginPage({ isLoading, error, onLogin }: LoginPageProps) {
 
               <label>
                 Mot de passe
-                <input
-                  required
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="********"
-                />
+                <span className="input-with-action">
+                  <input
+                    required
+                    type={isPasswordVisible ? 'text' : 'password'}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="********"
+                  />
+                  <button
+                    type="button"
+                    className="input-action-button"
+                    aria-label={isPasswordVisible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                    aria-pressed={isPasswordVisible}
+                    onClick={() => setIsPasswordVisible((value) => !value)}
+                  >
+                    👁️
+                  </button>
+                </span>
               </label>
 
               {error ? <p className="error-text">{error}</p> : null}

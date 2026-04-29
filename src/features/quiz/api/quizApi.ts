@@ -1,6 +1,7 @@
 import type {
   QuizAdaptiveLevelResponse,
   QuizAttemptResponse,
+  QuizHistoryItem,
   QuizItem,
   QuizRecommendedResponse,
   QuizThemeCoverage,
@@ -22,6 +23,10 @@ interface QuizFilters {
   patientId?: string;
   mainDisease?: string;
   lang?: PatientLanguage;
+}
+
+interface SaveQuizAttemptPayload {
+  patientId: string;
 }
 
 export const quizApi = {
@@ -65,6 +70,24 @@ export const quizApi = {
       '/quizzes/submit',
       payload,
       { token },
+    );
+  },
+
+  saveAttempt(attemptId: string, payload: SaveQuizAttemptPayload, token: string) {
+    return httpClient.post<SaveQuizAttemptPayload, QuizHistoryItem>(
+      `/quizzes/attempts/${attemptId}/save`,
+      payload,
+      { token },
+    );
+  },
+
+  listSavedAttempts(patientId: string, token: string, limit = 50) {
+    return httpClient.get<QuizHistoryItem[]>(
+      `/quizzes/patient/${patientId}/saved-attempts`,
+      {
+        token,
+        query: { limit: String(limit) },
+      },
     );
   },
 };

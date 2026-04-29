@@ -21,4 +21,12 @@ export const notificationApi = {
       { token },
     );
   },
+
+  markAllAsRead(token: string) {
+    return httpClient.patch<undefined, { updatedCount: number; readAt: string }>(
+      '/notifications/me/read-all',
+      undefined,
+      { token },
+    );
+  },
 };

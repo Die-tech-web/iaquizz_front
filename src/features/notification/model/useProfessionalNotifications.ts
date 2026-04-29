@@ -52,6 +52,22 @@ export const useProfessionalNotifications = (token: string) => {
     [token],
   );
 
+  const markAllAsRead = useCallback(async () => {
+    try {
+      await notificationApi.markAllAsRead(token);
+      setItems((current) =>
+        current.map((item) =>
+          item.status === 'UNREAD'
+            ? { ...item, status: 'READ', readAt: new Date().toISOString() }
+            : item,
+        ),
+      );
+      setUnreadCount(0);
+    } catch {
+      // Do not block dashboard if this helper action fails.
+    }
+  }, [token]);
+
   return useMemo(
     () => ({
       items,
@@ -60,7 +76,8 @@ export const useProfessionalNotifications = (token: string) => {
       error,
       load,
       markAsRead,
+      markAllAsRead,
     }),
-    [error, isLoading, items, load, markAsRead, unreadCount],
+    [error, isLoading, items, load, markAllAsRead, markAsRead, unreadCount],
   );
 };

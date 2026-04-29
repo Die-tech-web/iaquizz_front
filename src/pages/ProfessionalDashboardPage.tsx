@@ -27,6 +27,26 @@ const profileLabel = (profile: string) =>
 
 const levelLabel = (level: string) => LEVEL_LABELS[level] ?? level;
 
+const levelToProgressEstimate = (level: string) => {
+  if (level === 'ADVANCED') {
+    return 100;
+  }
+  if (level === 'INTERMEDIATE') {
+    return 66;
+  }
+  return 33;
+};
+
+const getPriorityMeta = (progression: number, level: string) => {
+  if (level === 'BEGINNER' || progression < 45) {
+    return { label: 'À surveiller', tone: 'watch' as const };
+  }
+  if (progression < 75) {
+    return { label: 'Suivi actif', tone: 'follow' as const };
+  }
+  return { label: 'Stable', tone: 'stable' as const };
+};
+
 export function ProfessionalDashboardPage({ auth, onLogout }: ProfessionalDashboardPageProps) {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [activeNotification, setActiveNotification] = useState<ProfessionalNotificationItem | null>(null);
@@ -55,16 +75,16 @@ export function ProfessionalDashboardPage({ auth, onLogout }: ProfessionalDashbo
     patients.length > 0
       ? Math.round(
           patients.reduce((acc, patient) => {
-            if (patient.currentLevel === 'ADVANCED') {
-              return acc + 100;
-            }
-            if (patient.currentLevel === 'INTERMEDIATE') {
-              return acc + 66;
-            }
-            return acc + 33;
+            return acc + levelToProgressEstimate(patient.currentLevel);
           }, 0) / patients.length,
         )
       : 0;
+  const averageProgressionTone =
+    averageProgression < 45 ? 'watch' : averageProgression < 75 ? 'follow' : 'stable';
+  const monitoredPatientsCount = patients.filter((patient) => {
+    const progression = levelToProgressEstimate(patient.currentLevel);
+    return getPriorityMeta(progression, patient.currentLevel).tone === 'watch';
+  }).length;
   const recentSavedQuizzes = selectedPatientSavedQuizzes.slice(0, 2);
   const selectedSavedQuiz =
     recentSavedQuizzes[selectedSavedQuizSlot] ?? recentSavedQuizzes[0] ?? null;
@@ -81,6 +101,11 @@ export function ProfessionalDashboardPage({ auth, onLogout }: ProfessionalDashbo
   const scoreOnTenForSavedQuiz = (score: number) => Number((score ?? 0).toFixed(2));
   const notificationBadgeLabel =
     notifications.unreadCount > 2 ? '2+' : String(notifications.unreadCount);
+  const selectedPatientProgression = selectedPatientInsight?.progressionPercentage
+    ?? (selectedPatient ? levelToProgressEstimate(selectedPatient.currentLevel) : 0);
+  const selectedPatientPriority = selectedPatient
+    ? getPriorityMeta(selectedPatientProgression, selectedPatient.currentLevel)
+    : null;
 
   return (
     <main className="screen professional-screen">
@@ -99,7 +124,15 @@ export function ProfessionalDashboardPage({ auth, onLogout }: ProfessionalDashbo
             <button
               type="button"
               className="notif-button"
-              onClick={() => setIsNotificationOpen((value) => !value)}
+              onClick={() => {
+                setIsNotificationOpen((value) => {
+                  const next = !value;
+                  if (next) {
+                    void notifications.markAllAsRead();
+                  }
+                  return next;
+                });
+              }}
               aria-label="Ouvrir les notifications"
               title="Notifications"
             >
@@ -197,16 +230,22 @@ export function ProfessionalDashboardPage({ auth, onLogout }: ProfessionalDashbo
 
         <section className="professional-stats" aria-label="Indicateurs">
           <article className="professional-stat professional-stat--summary">
-            <div className="professional-stat__item">
-              <p>Patients suivis</p>
+            <div className="professional-stat__item professional-stat__item--kpi">
+              <p className="professional-stat__label">Patients suivis</p>
               <strong>{patients.length}</strong>
+              <span className="professional-stat__hint">
+                {monitoredPatientsCount} à surveiller
+              </span>
             </div>
-            <div className="professional-stat__item">
-              <p>Progression moyenne</p>
+            <div
+              className={`professional-stat__item professional-stat__item--kpi professional-stat__item--${averageProgressionTone}`}
+            >
+              <p className="professional-stat__label">Progression moyenne</p>
               <strong>{averageProgression}%</strong>
+              <span className="professional-stat__hint">suivi thérapeutique global</span>
             </div>
-            <div className="professional-stat__item">
-              <p>Spécialité</p>
+            <div className="professional-stat__item professional-stat__item--support">
+              <p className="professional-stat__label">Spécialité</p>
               <strong>{auth.professional.specialty ?? 'Médecine générale'}</strong>
             </div>
           </article>
@@ -226,6 +265,8 @@ export function ProfessionalDashboardPage({ auth, onLogout }: ProfessionalDashbo
             <div className="patient-cards">
               {patients.map((patient) => {
                 const isActive = patient.id === selectedPatientId;
+                const progression = levelToProgressEstimate(patient.currentLevel);
+                const priority = getPriorityMeta(progression, patient.currentLevel);
                 return (
                   <button
                     key={patient.id}
@@ -233,10 +274,25 @@ export function ProfessionalDashboardPage({ auth, onLogout }: ProfessionalDashbo
                     className={`patient-card${isActive ? ' patient-card--active' : ''}`}
                     onClick={() => setSelectedPatientId(patient.id)}
                   >
-                    <p className="patient-card__name">
-                      {patient.firstName} {patient.lastName}
-                    </p>
+                    <div className="patient-card__top">
+                      <p className="patient-card__name">
+                        {patient.firstName} {patient.lastName}
+                      </p>
+                      <span className={`patient-priority-badge patient-priority-badge--${priority.tone}`}>
+                        {priority.label}
+                      </span>
+                    </div>
                     <p className="patient-card__meta">{profileLabel(patient.profile)}</p>
+                    <div className="patient-card__metrics">
+                      <div>
+                        <span>Niveau</span>
+                        <strong>{levelLabel(patient.currentLevel)}</strong>
+                      </div>
+                      <div>
+                        <span>Progression</span>
+                        <strong>{progression}%</strong>
+                      </div>
+                    </div>
                     <div className="patient-card__chips">
                       <span>{levelLabel(patient.currentLevel)}</span>
                       <span>{patient.preferredLanguage}</span>
@@ -244,6 +300,24 @@ export function ProfessionalDashboardPage({ auth, onLogout }: ProfessionalDashbo
                   </button>
                 );
               })}
+            </div>
+            <div className="professional-patient-list__actions">
+              <button
+                type="button"
+                className="secondary-pill-button professional-action-button"
+                onClick={() => {
+                  if (!selectedPatientId) {
+                    return;
+                  }
+                  setIsSavedQuizzesOpen(true);
+                  setSelectedSavedQuizSlot(0);
+                  setSelectedSavedQuizQuestionIndex(0);
+                  void loadPatientSavedQuizzes(selectedPatientId, true);
+                }}
+                disabled={!selectedPatientId || savedQuizzesLoading}
+              >
+                {savedQuizzesLoading ? 'Chargement...' : 'Voir quiz enregistrés'}
+              </button>
             </div>
           </article>
 
@@ -255,56 +329,49 @@ export function ProfessionalDashboardPage({ auth, onLogout }: ProfessionalDashbo
               </p>
             ) : (
               <div className="patient-detail">
-                <p className="patient-detail__title">
-                  {selectedPatient.firstName} {selectedPatient.lastName}
-                </p>
-                <p className="patient-detail__meta">
-                  {selectedPatient.email ?? 'Email non renseigné'} · Profil{' '}
-                  {profileLabel(selectedPatient.profile)}
-                </p>
-                <p className="patient-detail__meta">
-                  Conditions: {selectedPatient.conditions.length || 0}
-                </p>
+                <div className="patient-detail__header">
+                  <div>
+                    <p className="patient-detail__title">
+                      {selectedPatient.firstName} {selectedPatient.lastName}
+                    </p>
+                    <p className="patient-detail__meta">
+                      {selectedPatient.email ?? 'Email non renseigné'} · Profil{' '}
+                      {profileLabel(selectedPatient.profile)}
+                    </p>
+                    <p className="patient-detail__meta">
+                      Conditions: {selectedPatient.conditions.length || 0}
+                    </p>
+                  </div>
+                  {selectedPatientPriority ? (
+                    <span
+                      className={`patient-priority-badge patient-priority-badge--${selectedPatientPriority.tone}`}
+                    >
+                      {selectedPatientPriority.label}
+                    </span>
+                  ) : null}
+                </div>
 
                 {patientInsightLoading ? (
                   <p className="professional-empty">Analyse en cours...</p>
                 ) : selectedPatientInsight ? (
                   <>
                     <div className="patient-metrics">
-                      <div>
+                      <div className="patient-metrics__item patient-metrics__item--focus">
                         <span>Niveau actuel</span>
                         <strong>{levelLabel(selectedPatientInsight.currentLevel)}</strong>
                       </div>
-                      <div>
+                      <div className="patient-metrics__item">
                         <span>Niveau recommandé</span>
                         <strong>{levelLabel(selectedPatientInsight.recommendedLevel)}</strong>
                       </div>
-                      <div>
+                      <div className="patient-metrics__item patient-metrics__item--focus">
                         <span>Progression</span>
                         <strong>{selectedPatientInsight.progressionPercentage}%</strong>
                       </div>
-                      <div>
+                      <div className="patient-metrics__item">
                         <span>Tentatives</span>
                         <strong>{selectedPatientInsight.completedAttempts}</strong>
                       </div>
-                    </div>
-                    <div className="professional-patient-detail__actions">
-                      <button
-                        type="button"
-                        className="secondary-pill-button"
-                        onClick={() => {
-                          if (!selectedPatientId) {
-                            return;
-                          }
-                          setIsSavedQuizzesOpen(true);
-                          setSelectedSavedQuizSlot(0);
-                          setSelectedSavedQuizQuestionIndex(0);
-                          void loadPatientSavedQuizzes(selectedPatientId, true);
-                        }}
-                        disabled={!selectedPatientId || savedQuizzesLoading}
-                      >
-                        {savedQuizzesLoading ? 'Chargement...' : 'Voir quiz enregistrés'}
-                      </button>
                     </div>
                   </>
                 ) : (

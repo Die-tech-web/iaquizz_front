@@ -3,7 +3,7 @@ import type { ProfessionalNotificationItem } from '../entities/notification/mode
 import { useProfessionalNotifications } from '../features/notification/model/useProfessionalNotifications';
 import { useProfessionalDashboard } from '../features/professional/model/useProfessionalDashboard';
 import { PrimaryButton } from '../shared/ui/PrimaryButton';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ProfessionalDashboardPageProps {
   auth: ProfessionalAuthResponse;
@@ -106,6 +106,18 @@ export function ProfessionalDashboardPage({ auth, onLogout }: ProfessionalDashbo
   const selectedPatientPriority = selectedPatient
     ? getPriorityMeta(selectedPatientProgression, selectedPatient.currentLevel)
     : null;
+
+  useEffect(() => {
+    if (!isSavedQuizzesOpen) {
+      document.body.classList.remove('modal-no-scroll');
+      return;
+    }
+
+    document.body.classList.add('modal-no-scroll');
+    return () => {
+      document.body.classList.remove('modal-no-scroll');
+    };
+  }, [isSavedQuizzesOpen]);
 
   return (
     <main className="screen professional-screen">
@@ -228,30 +240,32 @@ export function ProfessionalDashboardPage({ auth, onLogout }: ProfessionalDashbo
           </section>
         ) : null}
 
-        <section className="professional-stats" aria-label="Indicateurs">
-          <article className="professional-stat professional-stat--summary">
-            <div className="professional-stat__item professional-stat__item--kpi">
-              <p className="professional-stat__label">Patients suivis</p>
-              <strong>{patients.length}</strong>
-              <span className="professional-stat__hint">
-                {monitoredPatientsCount} à surveiller
-              </span>
-            </div>
-            <div
-              className={`professional-stat__item professional-stat__item--kpi professional-stat__item--${averageProgressionTone}`}
-            >
-              <p className="professional-stat__label">Progression moyenne</p>
-              <strong>{averageProgression}%</strong>
-              <span className="professional-stat__hint">suivi thérapeutique global</span>
-            </div>
-            <div className="professional-stat__item professional-stat__item--support">
-              <p className="professional-stat__label">Spécialité</p>
-              <strong>{auth.professional.specialty ?? 'Médecine générale'}</strong>
-            </div>
-          </article>
-        </section>
+        {!isNotificationOpen ? (
+          <>
+            <section className="professional-stats" aria-label="Indicateurs">
+              <article className="professional-stat professional-stat--summary">
+                <div className="professional-stat__item professional-stat__item--kpi">
+                  <p className="professional-stat__label">Patients suivis</p>
+                  <strong>{patients.length}</strong>
+                  <span className="professional-stat__hint">
+                    {monitoredPatientsCount} à surveiller
+                  </span>
+                </div>
+                <div
+                  className={`professional-stat__item professional-stat__item--kpi professional-stat__item--${averageProgressionTone}`}
+                >
+                  <p className="professional-stat__label">Progression moyenne</p>
+                  <strong>{averageProgression}%</strong>
+                  <span className="professional-stat__hint">suivi thérapeutique global</span>
+                </div>
+                <div className="professional-stat__item professional-stat__item--support">
+                  <p className="professional-stat__label">Spécialité</p>
+                  <strong>{auth.professional.specialty ?? 'Médecine générale'}</strong>
+                </div>
+              </article>
+            </section>
 
-        <section className="professional-content">
+            <section className="professional-content">
           <article className="professional-panel professional-patient-list">
             <div className="professional-panel__head">
               <h2>Patients</h2>
@@ -274,28 +288,23 @@ export function ProfessionalDashboardPage({ auth, onLogout }: ProfessionalDashbo
                     className={`patient-card${isActive ? ' patient-card--active' : ''}`}
                     onClick={() => setSelectedPatientId(patient.id)}
                   >
-                    <div className="patient-card__top">
+                    <div className="patient-card__row">
                       <p className="patient-card__name">
                         {patient.firstName} {patient.lastName}
                       </p>
+                      <p className="patient-card__meta">{profileLabel(patient.profile)}</p>
+                      <span className="patient-card__field">
+                        Niveau: <strong className="patient-card__value">{levelLabel(patient.currentLevel)}</strong>
+                      </span>
+                      <span className="patient-card__field">
+                        Progression: <strong className="patient-card__value">{progression}%</strong>
+                      </span>
+                      <span className="patient-card__field">
+                        Langue: <strong className="patient-card__value">{patient.preferredLanguage.toUpperCase()}</strong>
+                      </span>
                       <span className={`patient-priority-badge patient-priority-badge--${priority.tone}`}>
                         {priority.label}
                       </span>
-                    </div>
-                    <p className="patient-card__meta">{profileLabel(patient.profile)}</p>
-                    <div className="patient-card__metrics">
-                      <div>
-                        <span>Niveau</span>
-                        <strong>{levelLabel(patient.currentLevel)}</strong>
-                      </div>
-                      <div>
-                        <span>Progression</span>
-                        <strong>{progression}%</strong>
-                      </div>
-                    </div>
-                    <div className="patient-card__chips">
-                      <span>{levelLabel(patient.currentLevel)}</span>
-                      <span>{patient.preferredLanguage}</span>
                     </div>
                   </button>
                 );
@@ -382,7 +391,9 @@ export function ProfessionalDashboardPage({ auth, onLogout }: ProfessionalDashbo
               </div>
             )}
           </article>
-        </section>
+            </section>
+          </>
+        ) : null}
       </section>
 
       {isSavedQuizzesOpen ? (

@@ -104,6 +104,18 @@ function App() {
     );
   }, [selectedHistoryEntry]);
 
+  useEffect(() => {
+    if (!isHistoryOpen) {
+      document.body.classList.remove('modal-no-scroll');
+      return;
+    }
+
+    document.body.classList.add('modal-no-scroll');
+    return () => {
+      document.body.classList.remove('modal-no-scroll');
+    };
+  }, [isHistoryOpen]);
+
   if (!isAuthenticated || !auth) {
     return <LoginPage isLoading={authLoading} error={authError} onLogin={login} />;
   }

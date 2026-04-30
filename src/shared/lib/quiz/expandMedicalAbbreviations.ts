@@ -92,7 +92,7 @@ const expandOneToken = (text: string, token: string, definition: string) => {
 
 export const expandMedicalAbbreviations = (
   text: string,
-  options?: { language?: 'fr' | 'en' },
+  options?: { language?: 'fr' | 'en' | 'wo' },
 ) => {
   if (!text) {
     return text;
@@ -102,7 +102,7 @@ export const expandMedicalAbbreviations = (
     return expandOneToken(acc, item.token, item.definition);
   }, text);
 
-  if (options?.language === 'en') {
+  if (options?.language !== 'fr') {
     return expanded;
   }
 

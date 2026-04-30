@@ -11,6 +11,7 @@ interface QuizQuestionPageProps {
   isFinalStep: boolean;
   question: QuizQuestion;
   language: PatientLanguage;
+  authToken?: string;
   levelUpNotice?: { fromLevel: string; toLevel: string } | null;
   perfectScoreNotice?: string | null;
   selectedValues: string[];
@@ -28,6 +29,7 @@ export function QuizQuestionPage({
   isFinalStep,
   question,
   language,
+  authToken,
   levelUpNotice,
   perfectScoreNotice,
   selectedValues,
@@ -51,9 +53,11 @@ export function QuizQuestionPage({
   const {
     isSupported: isSpeechSupported,
     isSpeaking,
+    isLoading: isSpeechLoading,
+    error: speechError,
     stop,
     toggleSpeak,
-  } = useTextToSpeech(language);
+  } = useTextToSpeech(language, { authToken });
   const canonicalQuestionText = question.text
     .replace(/\(Quiz\s*\d+\)\s*$/i, '')
     .replace(/\s+\?/g, '?')
@@ -131,7 +135,7 @@ export function QuizQuestionPage({
             aria-label="Écouter la question"
             title={isSpeaking ? 'Arrêter la lecture' : 'Écouter la question'}
             aria-pressed={isSpeaking}
-            disabled={!isSpeechSupported || !speechText}
+            disabled={!isSpeechSupported || !speechText || isSpeechLoading}
           >
             <span aria-hidden="true" className="question-audio__icon-svg">
               <svg viewBox="0 0 24 24" focusable="false">
@@ -146,6 +150,14 @@ export function QuizQuestionPage({
           </button>
           {!isSpeechSupported ? (
             <p className="question-audio__status">Lecture vocale indisponible sur ce navigateur.</p>
+          ) : speechError ? (
+            <p className="question-audio__status" role="status" aria-live="polite">
+              {speechError}
+            </p>
+          ) : isSpeechLoading ? (
+            <p className="question-audio__status" role="status" aria-live="polite">
+              Génération audio...
+            </p>
           ) : isSpeaking ? (
             <p className="question-audio__status" role="status" aria-live="polite">
               Lecture en cours...

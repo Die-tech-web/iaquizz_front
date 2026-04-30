@@ -1,4 +1,4 @@
-export const PATIENT_LANGUAGES = ['fr', 'en'] as const;
+export const PATIENT_LANGUAGES = ['fr', 'en', 'wo'] as const;
 
 export type PatientLanguage = (typeof PATIENT_LANGUAGES)[number];
 
@@ -13,12 +13,15 @@ export const resolvePatientLanguage = (value?: string | null): PatientLanguage =
   if (normalized === 'en') {
     return 'en';
   }
+  if (normalized === 'wo') {
+    return 'wo';
+  }
 
   return 'fr';
 };
 
 export const getSpeechSynthesisLanguage = (language: PatientLanguage) =>
-  language === 'en' ? 'en-US' : 'fr-FR';
+  language === 'en' ? 'en-US' : language === 'wo' ? 'wo-SN' : 'fr-FR';
 
 export const getLanguageLabel = (language: PatientLanguage) =>
-  language === 'en' ? 'English' : 'Français';
+  language === 'en' ? 'English' : language === 'wo' ? 'Wolof' : 'Français';

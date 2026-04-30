@@ -471,6 +471,7 @@ function App() {
       }
       question={quizSession.currentQuestion}
       language={quizSession.selectedLanguage}
+      authToken={patientAuth?.accessToken}
       levelUpNotice={quizSession.levelUpNotice}
       perfectScoreNotice={quizSession.perfectScoreNotice}
       selectedValues={quizSession.draftSelection}

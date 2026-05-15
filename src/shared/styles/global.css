@@ -26,6 +26,16 @@ body {
   color: var(--color-text);
 }
 
+body.quiz-start-bg {
+  background-color: #d9ebf0;
+  background-image:
+    linear-gradient(180deg, rgba(234, 248, 251, 0.8) 0%, rgba(216, 237, 240, 0.78) 100%),
+    url('/medecin.jpg');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
 body.login-no-scroll {
   overflow: hidden;
 }
@@ -329,7 +339,7 @@ body.modal-no-scroll {
   border-radius: 14px;
   border: 1px solid #c8dee4;
   background: linear-gradient(180deg, #ffffff 0%, #f6fbfc 100%);
-  box-shadow: 0 8px 20px rgba(14, 89, 104, 0.08);
+  box-shadow: 0 4px 12px rgba(14, 89, 104, 0.05);
 }
 
 .patient-level-badge__icon {
@@ -404,7 +414,7 @@ body.modal-no-scroll {
 }
 
 .patient-level-badge--advanced .patient-level-badge__text strong {
-  color: #1c8f6a;
+  color: #00c4b4;
 }
 
 .level-journey {
@@ -476,6 +486,184 @@ body.modal-no-scroll {
   text-align: left;
   display: grid;
   gap: 4px;
+}
+
+.quiz-personalization {
+  margin: 4px 0 2px;
+}
+
+.quiz-personalization__heading {
+  margin: 0 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #21344b;
+  font-family: 'Nunito', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.quiz-personalization__sparkle {
+  color: #17c9d0;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+}
+
+.quiz-personalization__sparkle svg {
+  width: 100%;
+  height: 100%;
+}
+
+.quiz-personalization-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.personalization-card {
+  border: 1px solid #e1e8ee;
+  border-radius: 16px;
+  background: #fff;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 116px;
+  box-shadow: 0 4px 12px rgba(13, 36, 69, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.personalization-card:focus-within {
+  border-color: #9dd7e6;
+  box-shadow: 0 0 0 3px rgba(17, 181, 210, 0.12);
+}
+
+.personalization-card__icon-circle {
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  flex: 0 0 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.personalization-card__icon-circle svg {
+  width: 25px;
+  height: 25px;
+}
+
+.personalization-card__icon-circle--language {
+  background: linear-gradient(180deg, #26bdf0 0%, #0ba5e4 100%);
+}
+
+.personalization-card__icon-circle--theme {
+  background: linear-gradient(180deg, #8c83ff 0%, #7a70f1 100%);
+}
+
+.personalization-card__icon-circle--difficulty {
+  background: linear-gradient(180deg, #ffa13a 0%, #ff8a1f 100%);
+}
+
+.personalization-card__body {
+  width: 100%;
+  min-width: 0;
+}
+
+.personalization-card__title {
+  display: block;
+  margin: 0;
+  color: #2f4158;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.personalization-select-wrap {
+  margin-top: 7px;
+  position: relative;
+}
+
+.personalization-select {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #132f49;
+  font-family: 'Nunito', sans-serif;
+  font-size: clamp(14px, 1.7vw, 20px);
+  line-height: 1.1;
+  font-weight: 800;
+  padding: 0;
+  padding-right: 22px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.personalization-select__chevron {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-48%);
+  width: 16px;
+  height: 16px;
+  color: #203954;
+  pointer-events: none;
+}
+
+.personalization-select__chevron svg {
+  width: 100%;
+  height: 100%;
+}
+
+.personalization-select:focus-visible {
+  outline: 2px solid rgba(17, 181, 210, 0.3);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.personalization-card__value-row {
+  margin: 7px 0 7px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.personalization-card__value {
+  margin: 0;
+  color: #132f49;
+  font-family: 'Nunito', sans-serif;
+  font-size: clamp(14px, 1.7vw, 20px);
+  line-height: 1.1;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.personalization-card__value-chevron {
+  width: 16px;
+  height: 16px;
+  color: #203954;
+  flex: 0 0 auto;
+}
+
+.personalization-card__value-chevron svg {
+  width: 100%;
+  height: 100%;
+}
+
+.personalization-card__hint {
+  margin: 6px 0 0;
+  color: #6f8296;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .theme-filters {
@@ -1100,6 +1288,39 @@ body.modal-no-scroll {
   .start-card .screen-subtitle {
     margin-top: 2px;
     font-size: clamp(12px, 0.9vw, 15px);
+  }
+
+  .quiz-personalization-grid {
+    gap: 10px;
+  }
+
+  .personalization-card {
+    min-height: 102px;
+    padding: 13px 15px;
+  }
+
+  .personalization-card__icon-circle {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .personalization-card__icon-circle svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .personalization-card__title {
+    font-size: 14px;
+  }
+
+  .personalization-card__value,
+  .personalization-select {
+    font-size: 18px;
+  }
+
+  .personalization-card__hint {
+    font-size: 13px;
   }
 
   .theme-badge {
@@ -2426,6 +2647,29 @@ body.modal-no-scroll {
 
   .start-card .screen-subtitle {
     font-size: clamp(14px, 4.4vw, 18px);
+  }
+
+  .quiz-personalization-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .personalization-card {
+    min-height: 0;
+    padding: 14px;
+  }
+
+  .quiz-personalization__heading {
+    font-size: clamp(22px, 6vw, 28px);
+  }
+
+  .personalization-card__title {
+    font-size: 14px;
+  }
+
+  .personalization-card__value,
+  .personalization-select {
+    font-size: clamp(16px, 5vw, 20px);
   }
 
   .quiz-selected-title {

@@ -276,7 +276,7 @@ export function QuizStartPage({
                 onClick={onOpenHistory}
                 disabled={isHistoryLoading}
               >
-                {isHistoryLoading ? 'Chargement...' : 'Voir mes derniers quiz'}
+                {isHistoryLoading ? 'Chargement...' : 'Derniers quiz'}
               </button>
               <PrimaryButton className="start-action-button" onClick={() => onStart([quiz.id])}>
                 C&apos;est parti !

@@ -560,7 +560,7 @@ body.modal-no-scroll {
 }
 
 .personalization-card__icon-circle--theme {
-  background: linear-gradient(180deg, #8c83ff 0%, #7a70f1 100%);
+  background: #ff4d94;
 }
 
 .personalization-card__icon-circle--difficulty {

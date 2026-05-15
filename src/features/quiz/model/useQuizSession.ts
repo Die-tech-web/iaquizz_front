@@ -30,6 +30,12 @@ interface LevelUpNotice {
   toLevel: string;
 }
 
+interface ProgressToast {
+  type: 'success' | 'warning' | 'info';
+  message: string;
+  duration: number;
+}
+
 const RECOMMENDATION_LIMIT = 10;
 const MAX_QUESTIONS_PER_QUIZ = 10;
 
@@ -123,6 +129,7 @@ export const useQuizSession = (auth: PatientAuthResponse | null) => {
   const [themeCoverage, setThemeCoverage] = useState<QuizThemeCoverage | null>(null);
   const [levelUpNotice, setLevelUpNotice] = useState<LevelUpNotice | null>(null);
   const [perfectScoreNotice, setPerfectScoreNotice] = useState<string | null>(null);
+  const [progressToast, setProgressToast] = useState<ProgressToast | null>(null);
   const [adaptiveLevelDecision, setAdaptiveLevelDecision] = useState<QuizAdaptiveLevelResponse | null>(
     null,
   );
@@ -230,6 +237,7 @@ export const useQuizSession = (auth: PatientAuthResponse | null) => {
     const adaptiveLevelDecision: QuizAdaptiveLevelResponse = {
       currentLevel: recommendedResult.value.currentLevel,
       recommendedLevel: recommendedResult.value.currentLevel,
+      currentModule: recommendedResult.value.currentModule,
       nextLevel: recommendedResult.value.nextLevel,
       progressionPercentage: recommendedResult.value.progressionPercentage,
       perfectScoresAtCurrentLevel: recommendedResult.value.perfectScoresAtCurrentLevel,
@@ -284,6 +292,7 @@ export const useQuizSession = (auth: PatientAuthResponse | null) => {
         setRecommendationMap({});
         setLevelUpNotice(null);
         setPerfectScoreNotice(null);
+        setProgressToast(null);
         setAdaptiveLevelDecision(null);
         setSavedHistory([]);
         setIsSavingAttempt(false);
@@ -327,6 +336,7 @@ export const useQuizSession = (auth: PatientAuthResponse | null) => {
         setSaveAttemptError(null);
         setHistoryError(null);
         setIsCurrentAttemptSaved(false);
+        setProgressToast(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Chargement quiz impossible.');
       } finally {
@@ -413,6 +423,7 @@ export const useQuizSession = (auth: PatientAuthResponse | null) => {
     setCorrectAnswersCount(0);
     setLevelUpNotice(null);
     setPerfectScoreNotice(null);
+    setProgressToast(null);
     setSaveAttemptError(null);
     setHistoryError(null);
     setIsCurrentAttemptSaved(false);
@@ -438,6 +449,7 @@ export const useQuizSession = (auth: PatientAuthResponse | null) => {
     setSessionQuizCursor(0);
     setIsRunCompleted(false);
     setPerfectScoreNotice(null);
+    setProgressToast(null);
     setSaveAttemptError(null);
     setHistoryError(null);
     setIsCurrentAttemptSaved(false);
@@ -464,6 +476,7 @@ export const useQuizSession = (auth: PatientAuthResponse | null) => {
     setIsRunCompleted(false);
     setLevelUpNotice(null);
     setPerfectScoreNotice(null);
+    setProgressToast(null);
     setSaveAttemptError(null);
     setHistoryError(null);
     setIsCurrentAttemptSaved(false);
@@ -580,20 +593,18 @@ export const useQuizSession = (auth: PatientAuthResponse | null) => {
         setIsCurrentAttemptSaved(false);
         setSaveAttemptError(null);
 
-        const totalQuestions = quiz.questions.length;
-        const correctAnswers = localCorrectAnswers;
-        const successRate = totalQuestions > 0 ? correctAnswers / totalQuestions : 0;
-        if (successRate >= 0.999) {
-          setPerfectScoreNotice(
-            `Bravo ! Vous avez reussi ${correctAnswers}/${totalQuestions} sur ce quiz.`,
-          );
+        setPerfectScoreNotice(null);
+
+        if (submittedAttempt.toast) {
+          setProgressToast(submittedAttempt.toast);
         } else {
-          setPerfectScoreNotice(null);
+          setProgressToast(null);
         }
 
         setAdaptiveLevelDecision((previous) => ({
           currentLevel: submittedAttempt.currentLevel,
           recommendedLevel: submittedAttempt.currentLevel,
+          currentModule: submittedAttempt.currentModule,
           nextLevel: submittedAttempt.nextLevel,
           progressionPercentage: submittedAttempt.progressionPercentage,
           perfectScoresAtCurrentLevel: submittedAttempt.perfectScoresAtCurrentLevel,
@@ -603,7 +614,7 @@ export const useQuizSession = (auth: PatientAuthResponse | null) => {
           overallSuccessRate: previous?.overallSuccessRate ?? 0,
           perfectScoresByLevel: previous?.perfectScoresByLevel ?? {},
           nextObjective: submittedAttempt.nextLevel
-            ? `Encore ${submittedAttempt.remainingPerfectScoresToUnlock} quiz parfait(s) à 10/10 pour débloquer le niveau suivant.`
+            ? `Validez le module en cours avec au moins 8/10 pour continuer la progression.`
             : null,
           rationale: previous?.rationale ?? '',
         }));
@@ -661,6 +672,7 @@ export const useQuizSession = (auth: PatientAuthResponse | null) => {
     setSessionQuizCursor(0);
     setLevelUpNotice(null);
     setPerfectScoreNotice(null);
+    setProgressToast(null);
     setSaveAttemptError(null);
     setHistoryError(null);
     setIsCurrentAttemptSaved(false);
@@ -716,6 +728,18 @@ export const useQuizSession = (auth: PatientAuthResponse | null) => {
     }
   };
 
+  useEffect(() => {
+    if (!progressToast) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setProgressToast(null);
+    }, progressToast.duration);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [progressToast]);
+
   return {
     quizPool,
     recommendationMap,
@@ -730,6 +754,7 @@ export const useQuizSession = (auth: PatientAuthResponse | null) => {
     attempt,
     levelUpNotice,
     perfectScoreNotice,
+    progressToast,
     savedHistory,
     isSavingAttempt,
     isHistoryLoading,

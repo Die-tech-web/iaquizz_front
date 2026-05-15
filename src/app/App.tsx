@@ -9,6 +9,7 @@ import { MedicalNotice } from '../pages/MedicalNotice';
 import { ProfessionalDashboardPage } from '../pages/ProfessionalDashboardPage';
 import { QuizQuestionPage } from '../pages/QuizQuestionPage';
 import { QuizStartPage } from '../pages/QuizStartPage';
+import { getThemeLabel } from '../shared/lib/quiz/themeLabels';
 import { PrimaryButton } from '../shared/ui/PrimaryButton';
 
 type AppStep = 'start' | 'quiz';
@@ -145,6 +146,7 @@ function App() {
     const attempt = quizSession.attempt;
     const levelUpNotice = quizSession.levelUpNotice;
     const perfectScoreNotice = quizSession.perfectScoreNotice;
+    const progressToast = quizSession.progressToast;
     const fallbackTotalQuestions = Math.max(quizSession.totalQuestionsInRun, 1);
     const fallbackCorrectAnswers = Math.min(quizSession.correctAnswersCount, fallbackTotalQuestions);
     const apiScoreOnTen =
@@ -178,7 +180,6 @@ function App() {
     const fromLevel = levelUpNotice ? LEVEL_LABELS[levelUpNotice.fromLevel] ?? levelUpNotice.fromLevel : '';
     const toLevel = levelUpNotice ? LEVEL_LABELS[levelUpNotice.toLevel] ?? levelUpNotice.toLevel : '';
     const currentLevelLabel = LEVEL_LABELS[attempt.currentLevel] ?? attempt.currentLevel;
-    const nextLevelLabel = attempt.nextLevel ? LEVEL_LABELS[attempt.nextLevel] ?? attempt.nextLevel : null;
 
     return (
       <main className="screen centered-screen">
@@ -197,6 +198,11 @@ function App() {
           <h1 className="screen-title">Quiz terminé</h1>
           <p className="screen-subtitle">Score: {finalScoreOnTen}/10</p>
           <p className="screen-subtitle">Niveau actuel: {currentLevelLabel}</p>
+          {progressToast ? (
+            <div className={`progress-toast progress-toast--${progressToast.type}`} role="status" aria-live="polite">
+              {progressToast.message}
+            </div>
+          ) : null}
           {perfectScoreNotice ? (
             <div className="perfect-score-notice" role="status" aria-live="polite">
               {perfectScoreNotice}
@@ -212,11 +218,11 @@ function App() {
             </div>
           ) : (
             <div className="level-progress-notice" role="status" aria-live="polite">
-              <p className="level-progress-notice__title">Progression: {attempt.progressionPercentage}%</p>
+              <p className="level-progress-notice__title">Module actuel: {getThemeLabel(attempt.currentModule)}</p>
               <p className="level-progress-notice__text">
-                {nextLevelLabel
-                  ? `Encore ${attempt.remainingPerfectScoresToUnlock} quiz parfait(s) à 10/10 pour débloquer le niveau ${nextLevelLabel}.`
-                  : 'Objectif atteint: niveau Avancé validé.'}
+                {attempt.passed
+                  ? 'Module validé. Continuez pour débloquer le niveau suivant.'
+                  : 'Score insuffisant. Obtenez au moins 8/10 pour passer au module suivant.'}
               </p>
             </div>
           )}
@@ -225,6 +231,7 @@ function App() {
           <MedicalNotice variant="end" />
           <div className="summary-actions">
             <PrimaryButton
+              className="summary-action summary-action--primary"
               type="button"
               onClick={() => {
                 void quizSession.saveCurrentAttempt();
@@ -237,6 +244,29 @@ function App() {
                   ? 'Enregistrement...'
                   : 'Enregistrer'}
             </PrimaryButton>
+            <div className="summary-actions__secondary">
+              <PrimaryButton
+                className="summary-action summary-action--secondary"
+                onClick={() => {
+                  quizSession.start();
+                  setStep('quiz');
+                  setIsHistoryOpen(false);
+                }}
+              >
+                Quiz suivant
+              </PrimaryButton>
+              <PrimaryButton
+                className="summary-action summary-action--secondary"
+                onClick={() => {
+                  const currentQuizId = quizSession.quiz?.id;
+                  quizSession.start(currentQuizId ? [currentQuizId] : undefined);
+                  setStep('quiz');
+                  setIsHistoryOpen(false);
+                }}
+              >
+                Rejouer
+              </PrimaryButton>
+            </div>
           </div>
           {quizSession.saveAttemptError ? (
             <p className="error-text">{quizSession.saveAttemptError}</p>
@@ -244,15 +274,6 @@ function App() {
           {quizSession.isCurrentAttemptSaved ? (
             <p className="save-success-text">Quiz enregistré avec succès.</p>
           ) : null}
-          <PrimaryButton
-            onClick={() => {
-              quizSession.start();
-              setStep('quiz');
-              setIsHistoryOpen(false);
-            }}
-          >
-            Rejouer
-          </PrimaryButton>
         </section>
       </main>
     );

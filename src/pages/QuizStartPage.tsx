@@ -94,7 +94,8 @@ export function QuizStartPage({
     }
   }, [activeTheme, quiz.themes]);
 
-  const currentLevel = adaptiveLevelDecision?.recommendedLevel ?? 'BEGINNER';
+  const currentLevel =
+    adaptiveLevelDecision?.currentLevel ?? adaptiveLevelDecision?.recommendedLevel ?? 'BEGINNER';
   const nextLevel = adaptiveLevelDecision?.nextLevel ?? null;
   const progressionPercentage = adaptiveLevelDecision?.progressionPercentage ?? 0;
   const remainingPerfectScores = adaptiveLevelDecision?.remainingPerfectScoresToUnlock ?? 3;
@@ -102,10 +103,26 @@ export function QuizStartPage({
   const currentLevelRank = LEVEL_RANK[currentLevel] ?? 1;
   const levelOrder: Array<keyof typeof LEVEL_LABELS> = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
   const labelForLevel = (level: string) => LEVEL_LABELS[level] ?? level;
+  const patientLevelTone =
+    currentLevel === 'ADVANCED'
+      ? 'advanced'
+      : currentLevel === 'INTERMEDIATE'
+        ? 'intermediate'
+        : 'beginner';
 
   return (
     <main className="screen start-screen">
       <section className="card start-card">
+        <div
+          className={`patient-level-badge patient-level-badge--${patientLevelTone}`}
+          aria-label={`Niveau actuel: ${labelForLevel(currentLevel)}`}
+        >
+          <span className="patient-level-badge__icon" aria-hidden="true" />
+          <span className="patient-level-badge__text">
+            <small>Niveau actuel</small>
+            <strong>{labelForLevel(currentLevel)}</strong>
+          </span>
+        </div>
         <div className="start-shell">
           <section className="start-main-column">
             <div className="start-intro">

@@ -40,9 +40,9 @@ export function LoginPage({ isLoading, error, onLogin }: LoginPageProps) {
           </aside>
 
           <div className="login-form-panel">
-            <h2 className="screen-title">
-              Bienvenue sur <span className="brand-gradient">AKACare</span>
-            </h2>
+            <div className="login-brand" aria-label="Bienvenue sur AkaCare">
+              <img className="login-brand-logo" src="/Logo1-300x180.png" alt="Bienvenue sur AkaCare" />
+            </div>
 
             <form className="login-form" onSubmit={onSubmit}>
               <label>

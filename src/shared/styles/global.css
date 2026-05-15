@@ -160,6 +160,17 @@ body.modal-no-scroll {
   overflow: auto;
 }
 
+.login-brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.login-brand-logo {
+  width: min(320px, 100%);
+  height: auto;
+}
+
 .login-form {
   margin-top: 14px;
   display: grid;
@@ -288,6 +299,7 @@ body.modal-no-scroll {
   overflow: hidden;
   padding: 12px 14px;
   background: #fff;
+  position: relative;
 }
 
 .start-shell {
@@ -302,6 +314,97 @@ body.modal-no-scroll {
   gap: 7px;
   width: min(860px, 100%);
   margin: 0 auto;
+}
+
+.patient-level-badge {
+  position: absolute;
+  top: 12px;
+  right: 18px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 160px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  border: 1px solid #c8dee4;
+  background: linear-gradient(180deg, #ffffff 0%, #f6fbfc 100%);
+  box-shadow: 0 8px 20px rgba(14, 89, 104, 0.08);
+}
+
+.patient-level-badge__icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  flex: 0 0 30px;
+  background-color: #fff7e5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23F2B01E' d='M3 19h18v2H3v-2Zm1.2-11.3a1.9 1.9 0 1 1 3.8 0c0 .28-.07.55-.17.8l3.37 2.7 2.85-5.74a1.9 1.9 0 1 1 1.74 0l2.85 5.74 3.37-2.7c-.1-.25-.17-.52-.17-.8a1.9 1.9 0 1 1 1.9 1.9c-.42 0-.8-.13-1.1-.35L20 18H4l-1.63-8.68c-.3.22-.68.35-1.1.35a1.9 1.9 0 0 1 0-3.8A1.9 1.9 0 0 1 4.2 7.7Z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 22px 22px;
+  box-shadow: inset 0 0 0 1px rgba(242, 176, 30, 0.25);
+}
+
+.patient-level-badge__text {
+  display: grid;
+  gap: 1px;
+}
+
+.patient-level-badge__text small {
+  color: #5b7078;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.patient-level-badge__text strong {
+  color: #13424f;
+  font-family: 'Nunito', sans-serif;
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.patient-level-badge--beginner {
+  border-color: #b8dfd2;
+  background: linear-gradient(180deg, #f6fffb 0%, #edf9f4 100%);
+}
+
+.patient-level-badge--beginner .patient-level-badge__icon {
+  background-color: #eefaf5;
+  box-shadow: inset 0 0 0 1px rgba(35, 157, 116, 0.22);
+}
+
+.patient-level-badge--beginner .patient-level-badge__text strong {
+  color: #177254;
+}
+
+.patient-level-badge--intermediate {
+  border-color: #b9d9e8;
+  background: linear-gradient(180deg, #f7fdff 0%, #eef8fc 100%);
+}
+
+.patient-level-badge--intermediate .patient-level-badge__icon {
+  background-color: #edf8fc;
+  box-shadow: inset 0 0 0 1px rgba(31, 127, 167, 0.24);
+}
+
+.patient-level-badge--intermediate .patient-level-badge__text strong {
+  color: #1b6384;
+}
+
+.patient-level-badge--advanced {
+  border-color: #c8dcf5;
+  background: linear-gradient(180deg, #fbfdff 0%, #f2f7ff 100%);
+}
+
+.patient-level-badge--advanced .patient-level-badge__icon {
+  background-color: #eef3fd;
+  box-shadow: inset 0 0 0 1px rgba(45, 99, 189, 0.26);
+}
+
+.patient-level-badge--advanced .patient-level-badge__text strong {
+  color: #1c8f6a;
 }
 
 .level-journey {
@@ -2204,6 +2307,11 @@ body.modal-no-scroll {
     grid-template-columns: 1fr;
   }
 
+  .patient-level-badge {
+    position: static;
+    margin: 0 0 8px auto;
+  }
+
   .start-reco-column {
     max-height: none;
     overflow: visible;
@@ -2281,6 +2389,26 @@ body.modal-no-scroll {
   .start-screen {
     justify-content: flex-start;
     gap: 10px;
+  }
+
+  .patient-level-badge {
+    min-width: 146px;
+    padding: 7px 10px;
+  }
+
+  .patient-level-badge__icon {
+    width: 24px;
+    height: 24px;
+    flex-basis: 24px;
+    background-size: 18px 18px;
+  }
+
+  .patient-level-badge__text small {
+    font-size: 10px;
+  }
+
+  .patient-level-badge__text strong {
+    font-size: 19px;
   }
 
   .start-card {

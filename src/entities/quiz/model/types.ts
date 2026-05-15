@@ -51,7 +51,9 @@ export interface QuizAttemptResponse {
   status: string;
   completedAt: string;
   levelAtAttempt: string;
+  moduleAtAttempt: string | null;
   currentLevel: string;
+  currentModule: string;
   nextLevel: string | null;
   progressionPercentage: number;
   perfectScoresAtCurrentLevel: number;
@@ -60,6 +62,15 @@ export interface QuizAttemptResponse {
   levelChanged: boolean;
   previousLevel: string | null;
   congratulationMessage: string | null;
+  passed: boolean;
+  moduleCompleted: boolean;
+  levelCompleted: boolean;
+  perfectQuizRemaining: number | null;
+  toast: {
+    type: 'success' | 'warning' | 'info';
+    message: string;
+    duration: number;
+  } | null;
 }
 
 export interface QuizHistoryAnswer {
@@ -129,6 +140,7 @@ export interface QuizAdaptiveLevelStats {
 export interface QuizAdaptiveLevelResponse {
   currentLevel: string;
   recommendedLevel: string;
+  currentModule?: string;
   nextLevel: string | null;
   progressionPercentage: number;
   perfectScoresAtCurrentLevel: number;
@@ -144,6 +156,7 @@ export interface QuizAdaptiveLevelResponse {
 export interface QuizRecommendedResponse {
   patientId: string;
   currentLevel: string;
+  currentModule: string;
   nextLevel: string | null;
   progressionPercentage: number;
   perfectScoresAtCurrentLevel: number;

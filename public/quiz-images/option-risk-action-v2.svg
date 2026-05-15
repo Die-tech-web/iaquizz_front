@@ -1,16 +1,20 @@
 <svg width="512" height="320" viewBox="0 0 512 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="320" rx="28" fill="#FFF4F6"/>
-  <rect x="22" y="22" width="468" height="276" rx="20" fill="#FFF9FA" stroke="#F25283" stroke-width="4"/>
-  <rect x="72" y="84" width="368" height="178" rx="16" fill="#F1E6EB"/>
-  <rect x="106" y="112" width="296" height="120" rx="14" fill="#E7D8E1"/>
-  <rect x="130" y="132" width="164" height="84" rx="12" fill="#FFFFFF" stroke="#C9B9C2" stroke-width="3"/>
-  <rect x="146" y="148" width="44" height="26" rx="6" fill="#11B5D2"/>
-  <rect x="196" y="148" width="44" height="26" rx="6" fill="#3FBA8A"/>
-  <rect x="246" y="148" width="28" height="26" rx="6" fill="#F2A33C"/>
-  <path d="M130 132L294 216" stroke="#F25283" stroke-width="10" stroke-linecap="round"/>
-  <rect x="312" y="150" width="72" height="54" rx="10" fill="#B9AAB4"/>
-  <path d="M326 170H368" stroke="#6F5560" stroke-width="6" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="page" x1="0" y1="0" x2="512" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF4F7"/>
+      <stop offset="1" stop-color="#FFEFF4"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="320" rx="28" fill="url(#page)"/>
+  <rect x="22" y="22" width="468" height="276" rx="20" fill="#FFF9FB" stroke="#F36A93" stroke-width="4"/>
+  <rect x="70" y="82" width="372" height="180" rx="16" fill="#EAF5F9"/>
+
+  <circle cx="124" cy="96" r="24" fill="#F56B94"/>
+  <path d="M114 96H134" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <path d="M124 86V106" stroke="white" stroke-width="4" stroke-linecap="round"/>
+
+  <rect x='152' y='118' width='220' height='96' rx='16' fill='#FFFFFF' stroke='#E2C0CC' stroke-width='3'/><rect x='170' y='136' width='30' height='60' rx='6' fill='#F56B94'/><rect x='206' y='148' width='30' height='48' rx='6' fill='#F8A0B8'/><rect x='242' y='160' width='30' height='36' rx='6' fill='#FAC3D2'/><path d='M158 120L364 212' stroke='#F25283' stroke-width='10' stroke-linecap='round'/><circle cx='318' cy='146' r='20' fill='#FFFFFF' stroke='#F38AAA' stroke-width='3'/><path d='M309 137L327 155M327 137L309 155' stroke='#F25283' stroke-width='4.5' stroke-linecap='round'/>
+
   <circle cx="410" cy="70" r="16" fill="#F25283"/>
-  <path d="M404 64L416 76" stroke="white" stroke-width="4" stroke-linecap="round"/>
-  <path d="M416 64L404 76" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <path d='M404 64L416 76' stroke='white' stroke-width='4' stroke-linecap='round'/><path d='M416 64L404 76' stroke='white' stroke-width='4' stroke-linecap='round'/>
 </svg>

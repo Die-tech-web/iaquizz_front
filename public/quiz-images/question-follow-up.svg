@@ -1,9 +1,67 @@
 <svg width="640" height="240" viewBox="0 0 640 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="640" height="240" rx="24" fill="#EAF8FB"/>
-  <rect x="20" y="20" width="600" height="200" rx="18" fill="#F8FDFE" stroke="#11B5D2" stroke-width="4"/>
-  <circle cx="120" cy="120" r="46" fill="#11B5D2"/>
-  <path d="M97 120L114 137L145 106" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="198" y="84" width="360" height="16" rx="8" fill="#11B5D2"/>
-  <rect x="198" y="120" width="290" height="16" rx="8" fill="#A0DAE5"/>
-  <rect x="198" y="156" width="238" height="16" rx="8" fill="#C5EBF2"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="640" y2="240" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#EAF8FB"/>
+      <stop offset="1" stop-color="#DFF3F8"/>
+    </linearGradient>
+    <linearGradient id="card" x1="36" y1="24" x2="604" y2="216" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F4FCFF"/>
+    </linearGradient>
+    <linearGradient id="coat" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EAF6FB"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="240" rx="24" fill="url(#bg)"/>
+  <rect x="20" y="20" width="600" height="200" rx="22" fill="url(#card)" stroke="#A8DDE8" stroke-width="2.5"/>
+
+  <g opacity="0.9">
+    <rect x="44" y="44" width="220" height="152" rx="16" fill="#F2FBFE" stroke="#B5E4EE" stroke-width="2"/>
+    <rect x="44" y="44" width="220" height="28" rx="16" fill="#11B5D2"/>
+    <circle cx="86" cy="59" r="4" fill="#E8FAFF"/>
+    <circle cx="104" cy="59" r="4" fill="#E8FAFF"/>
+    <circle cx="122" cy="59" r="4" fill="#E8FAFF"/>
+    <g fill="#9DD9E6">
+      <rect x="62" y="84" width="28" height="18" rx="5"/>
+      <rect x="100" y="84" width="28" height="18" rx="5"/>
+      <rect x="138" y="84" width="28" height="18" rx="5"/>
+      <rect x="176" y="84" width="28" height="18" rx="5"/>
+      <rect x="62" y="112" width="28" height="18" rx="5"/>
+      <rect x="100" y="112" width="28" height="18" rx="5"/>
+      <rect x="138" y="112" width="28" height="18" rx="5"/>
+      <rect x="176" y="112" width="28" height="18" rx="5"/>
+      <rect x="62" y="140" width="28" height="18" rx="5"/>
+      <rect x="100" y="140" width="28" height="18" rx="5"/>
+      <rect x="138" y="140" width="28" height="18" rx="5"/>
+      <rect x="176" y="140" width="28" height="18" rx="5"/>
+    </g>
+    <circle cx="224" cy="168" r="18" fill="#11B5D2"/>
+    <path d="M215 168L221 174L234 161" stroke="white" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <g transform="translate(292 34)">
+    <ellipse cx="146" cy="172" rx="122" ry="12" fill="#D5EDF4"/>
+    <circle cx="116" cy="56" r="20" fill="#DFA177"/>
+    <circle cx="174" cy="58" r="18" fill="#D59A73"/>
+
+    <path d="M93 80C93 66 102 58 114 58H118C131 58 140 66 140 80V114H93V80Z" fill="url(#coat)" stroke="#B6DDE8" stroke-width="1.4"/>
+    <path d="M104 84H130L120 98L110 84H104Z" fill="#2A3B57"/>
+    <path d="M110 84H121V114H110V84Z" fill="#E8F8FD"/>
+    <rect x="126" y="88" width="7" height="42" rx="3.5" fill="#2DAED8"/>
+    <circle cx="129.5" cy="132" r="7.5" fill="#2DAED8"/>
+    <circle cx="129.5" cy="132" r="4.2" fill="#CFF1FA"/>
+
+    <path d="M156 84C156 72 164 64 175 64H178C190 64 198 72 198 84V114H156V84Z" fill="#1FB7D3"/>
+    <path d="M165 90C166 84 170 80 175 80H177C183 80 188 84 189 90V114H165V90Z" fill="#30C6DE"/>
+    <path d="M162 72C169 58 187 54 197 64C194 74 188 80 180 83C173 85 167 82 162 72Z" fill="#2A4A69"/>
+
+    <path d="M102 54C102 42 109 36 118 36C127 36 134 42 134 54V58H102V54Z" fill="#20334B"/>
+    <path d="M160 58C160 46 166 40 174 40C182 40 188 46 188 58V61H160V58Z" fill="#1E4466"/>
+
+    <rect x="131" y="96" width="40" height="6" rx="3" fill="#89D3E4"/>
+    <rect x="126" y="104" width="50" height="6" rx="3" fill="#A5E0EE"/>
+    <rect x="121" y="112" width="60" height="6" rx="3" fill="#BEEAF3"/>
+  </g>
 </svg>

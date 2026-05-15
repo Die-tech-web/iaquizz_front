@@ -1,30 +1,20 @@
 <svg width="512" height="320" viewBox="0 0 512 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="320" rx="28" fill="#FFF4F6"/>
-  <rect x="22" y="22" width="468" height="276" rx="20" fill="#FFF9FA" stroke="#F25283" stroke-width="4"/>
+  <defs>
+    <linearGradient id="page" x1="0" y1="0" x2="512" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF4F7"/>
+      <stop offset="1" stop-color="#FFEFF4"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="320" rx="28" fill="url(#page)"/>
+  <rect x="22" y="22" width="468" height="276" rx="20" fill="#FFF9FB" stroke="#F36A93" stroke-width="4"/>
+  <rect x="70" y="82" width="372" height="180" rx="16" fill="#EAF5F9"/>
 
-  <!-- home background -->
-  <rect x="72" y="84" width="368" height="178" rx="16" fill="#EFE4EA"/>
-  <rect x="102" y="194" width="308" height="48" rx="14" fill="#BFAFBA"/>
+  <circle cx="124" cy="96" r="24" fill="#27B3D8"/>
+  <path d="M114 96H134" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <path d="M124 86V106" stroke="white" stroke-width="4" stroke-linecap="round"/>
 
-  <!-- tired patient ignoring alert -->
-  <circle cx="202" cy="152" r="20" fill="#FFD6BF"/>
-  <rect x="178" y="172" width="52" height="56" rx="12" fill="#95A1A8"/>
-  <path d="M192 152H200" stroke="#6C5159" stroke-width="4" stroke-linecap="round"/>
-  <path d="M208 152H216" stroke="#6C5159" stroke-width="4" stroke-linecap="round"/>
+  <circle cx='210' cy='160' r='38' fill='#FFFFFF' stroke='#A9D8E5' stroke-width='4'/><path d='M210 132V168' stroke='#27B3D8' stroke-width='8' stroke-linecap='round'/><circle cx='210' cy='182' r='6' fill='#27B3D8'/><path d='M282 126H378' stroke='#9ED6E4' stroke-width='12' stroke-linecap='round'/><path d='M282 154H360' stroke='#BEE7F1' stroke-width='10' stroke-linecap='round'/><path d='M282 180H338' stroke='#D0EEF5' stroke-width='10' stroke-linecap='round'/>
 
-  <!-- meds left aside -->
-  <rect x="304" y="178" width="92" height="42" rx="10" fill="#FFFFFF" stroke="#C7B8C0" stroke-width="3"/>
-  <rect x="320" y="186" width="16" height="24" rx="3" fill="#11B5D2"/>
-  <rect x="342" y="186" width="14" height="24" rx="3" fill="#3FBA8A"/>
-  <rect x="362" y="186" width="10" height="24" rx="3" fill="#F2A33C"/>
-
-  <!-- cramp warning but ignored -->
-  <path d="M146 208L158 196" stroke="#F25283" stroke-width="5" stroke-linecap="round"/>
-  <path d="M158 208L170 196" stroke="#F25283" stroke-width="5" stroke-linecap="round"/>
-  <path d="M174 208L186 196" stroke="#F25283" stroke-width="5" stroke-linecap="round"/>
-
-  <!-- negative indicator -->
   <circle cx="410" cy="70" r="16" fill="#F25283"/>
-  <path d="M404 64L416 76" stroke="white" stroke-width="4" stroke-linecap="round"/>
-  <path d="M416 64L404 76" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <path d='M404 64L416 76' stroke='white' stroke-width='4' stroke-linecap='round'/><path d='M416 64L404 76' stroke='white' stroke-width='4' stroke-linecap='round'/>
 </svg>

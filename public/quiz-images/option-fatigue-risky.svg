@@ -1,34 +1,20 @@
 <svg width="512" height="320" viewBox="0 0 512 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="320" rx="28" fill="#FFF3F6"/>
-  <rect x="22" y="22" width="468" height="276" rx="20" fill="#FFF9FB" stroke="#F25283" stroke-width="4"/>
+  <defs>
+    <linearGradient id="page" x1="0" y1="0" x2="512" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF4F7"/>
+      <stop offset="1" stop-color="#FFEFF4"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="320" rx="28" fill="url(#page)"/>
+  <rect x="22" y="22" width="468" height="276" rx="20" fill="#FFF9FB" stroke="#F36A93" stroke-width="4"/>
+  <rect x="70" y="82" width="372" height="180" rx="16" fill="#EAF5F9"/>
 
-  <!-- home room -->
-  <rect x="70" y="86" width="372" height="176" rx="16" fill="#F1E8EC"/>
-  <rect x="86" y="98" width="104" height="70" rx="10" fill="#E6D8DF"/>
-  <rect x="334" y="204" width="88" height="26" rx="8" fill="#D8C8D0"/>
+  <circle cx="124" cy="96" r="24" fill="#2CB8D9"/>
+  <path d="M114 96H134" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <path d="M124 86V106" stroke="white" stroke-width="4" stroke-linecap="round"/>
 
-  <!-- couch -->
-  <rect x="112" y="190" width="290" height="50" rx="14" fill="#B9A9B3"/>
+  <rect x='152' y='120' width='220' height='94' rx='18' fill='#FFFFFF' stroke='#A6D7E5' stroke-width='3'/><circle cx='188' cy='152' r='14' fill='#FFD7C1'/><rect x='170' y='166' width='36' height='34' rx='10' fill='#7BCDDD'/><path d='M246 150H338' stroke='#8FCFDF' stroke-width='10' stroke-linecap='round'/><path d='M246 176H322' stroke='#B8E5F0' stroke-width='10' stroke-linecap='round'/><circle cx='356' cy='146' r='16' fill='#EAF7FB' stroke='#A7D8E6' stroke-width='3'/><path d='M356 138V146L364 152' stroke='#2CB8D9' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/>
 
-  <!-- tired patient -->
-  <circle cx="212" cy="144" r="20" fill="#FFD6BF"/>
-  <rect x="188" y="164" width="50" height="60" rx="12" fill="#8D9AA1"/>
-  <path d="M200 146L210 146" stroke="#6A4E55" stroke-width="4" stroke-linecap="round"/>
-  <path d="M216 146L226 146" stroke="#6A4E55" stroke-width="4" stroke-linecap="round"/>
-  <path d="M206 156C212 160 220 160 226 156" stroke="#6A4E55" stroke-width="4" stroke-linecap="round"/>
-
-  <!-- ignored medication on table -->
-  <rect x="300" y="174" width="92" height="44" rx="10" fill="#FFFFFF" stroke="#C8B8C0" stroke-width="3"/>
-  <rect x="316" y="184" width="20" height="20" rx="4" fill="#11B5D2"/>
-  <rect x="340" y="184" width="18" height="20" rx="4" fill="#3FBA8A"/>
-  <rect x="362" y="184" width="14" height="20" rx="4" fill="#F2A33C"/>
-
-  <!-- risky cross -->
   <circle cx="410" cy="70" r="16" fill="#F25283"/>
-  <path d="M404 64L416 76" stroke="white" stroke-width="4" stroke-linecap="round"/>
-  <path d="M416 64L404 76" stroke="white" stroke-width="4" stroke-linecap="round"/>
-
-  <!-- confusion mark -->
-  <path d="M250 102C260 94 275 102 270 115C266 126 252 126 252 138" stroke="#F25283" stroke-width="5" stroke-linecap="round"/>
-  <circle cx="252" cy="147" r="4" fill="#F25283"/>
+  <path d='M404 64L416 76' stroke='white' stroke-width='4' stroke-linecap='round'/><path d='M416 64L404 76' stroke='white' stroke-width='4' stroke-linecap='round'/>
 </svg>

@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 import type {
   QuizAdaptiveLevelResponse,
   QuizItem,
-} from '../entities/quiz/model/types';
+} from "../entities/quiz/model/types";
 import {
   getLanguageLabel,
   PATIENT_LANGUAGES,
   type PatientLanguage,
-} from '../shared/lib/i18n/language';
-import { expandMedicalAbbreviations } from '../shared/lib/quiz/expandMedicalAbbreviations';
-import { getThemeLabel } from '../shared/lib/quiz/themeLabels';
-import { PrimaryButton } from '../shared/ui/PrimaryButton';
-import { MedicalNotice } from './MedicalNotice';
+} from "../shared/lib/i18n/language";
+import { expandMedicalAbbreviations } from "../shared/lib/quiz/expandMedicalAbbreviations";
+import { getThemeLabel } from "../shared/lib/quiz/themeLabels";
+import { PrimaryButton } from "../shared/ui/PrimaryButton";
+import { MedicalNotice } from "./MedicalNotice";
 
 interface QuizStartPageProps {
   quiz: QuizItem;
@@ -28,9 +28,9 @@ interface QuizStartPageProps {
 }
 
 const LEVEL_LABELS: Record<string, string> = {
-  BEGINNER: 'Débutant',
-  INTERMEDIATE: 'Intermédiaire',
-  ADVANCED: 'Avancé',
+  BEGINNER: "Débutant",
+  INTERMEDIATE: "Intermédiaire",
+  ADVANCED: "Avancé",
 };
 
 export function QuizStartPage({
@@ -46,19 +46,21 @@ export function QuizStartPage({
   isHistoryLoading,
   onLogout,
 }: QuizStartPageProps) {
-  const [activeTheme, setActiveTheme] = useState('ALL');
+  const [activeTheme, setActiveTheme] = useState("ALL");
 
   useEffect(() => {
-    document.body.classList.add('quiz-start-bg');
+    document.body.classList.add("quiz-start-bg");
     return () => {
-      document.body.classList.remove('quiz-start-bg');
+      document.body.classList.remove("quiz-start-bg");
     };
   }, []);
 
   const availableByTheme = useMemo(() => {
     const counts = new Map<string, number>();
     quizzes.forEach((item) => {
-      (item.themes ?? []).forEach((theme) => counts.set(theme, (counts.get(theme) ?? 0) + 1));
+      (item.themes ?? []).forEach((theme) =>
+        counts.set(theme, (counts.get(theme) ?? 0) + 1),
+      );
     });
 
     return counts;
@@ -69,7 +71,7 @@ export function QuizStartPage({
   }, [availableByTheme]);
 
   const filteredQuizzes = useMemo(() => {
-    if (activeTheme === 'ALL') {
+    if (activeTheme === "ALL") {
       return quizzes;
     }
 
@@ -89,21 +91,23 @@ export function QuizStartPage({
 
   useEffect(() => {
     const selectedQuizHasTheme =
-      activeTheme === 'ALL' || (quiz.themes ?? []).includes(activeTheme);
+      activeTheme === "ALL" || (quiz.themes ?? []).includes(activeTheme);
     if (!selectedQuizHasTheme) {
-      setActiveTheme('ALL');
+      setActiveTheme("ALL");
     }
   }, [activeTheme, quiz.themes]);
 
   const currentLevel =
-    adaptiveLevelDecision?.currentLevel ?? adaptiveLevelDecision?.recommendedLevel ?? 'BEGINNER';
+    adaptiveLevelDecision?.currentLevel ??
+    adaptiveLevelDecision?.recommendedLevel ??
+    "BEGINNER";
   const labelForLevel = (level: string) => LEVEL_LABELS[level] ?? level;
   const patientLevelTone =
-    currentLevel === 'ADVANCED'
-      ? 'advanced'
-      : currentLevel === 'INTERMEDIATE'
-        ? 'intermediate'
-        : 'beginner';
+    currentLevel === "ADVANCED"
+      ? "advanced"
+      : currentLevel === "INTERMEDIATE"
+        ? "intermediate"
+        : "beginner";
 
   return (
     <main className="screen start-screen">
@@ -124,7 +128,9 @@ export function QuizStartPage({
               <p className="screen-subtitle">Bonjour {patientName}</p>
               <h1 className="screen-title">Démarrer votre Quiz</h1>
               <p className="screen-subtitle">
-                {expandMedicalAbbreviations(quiz.title, { language: selectedLanguage })}
+                {expandMedicalAbbreviations(quiz.title, {
+                  language: selectedLanguage,
+                })}
               </p>
               <div className="quiz-current-themes">
                 {(quiz.themes ?? []).map((theme) => (
@@ -135,9 +141,15 @@ export function QuizStartPage({
               </div>
             </div>
 
-            <section className="quiz-personalization" aria-label="Personnalisez votre quiz">
+            <section
+              className="quiz-personalization"
+              aria-label="Personnalisez votre quiz"
+            >
               <p className="quiz-personalization__heading">
-                <span className="quiz-personalization__sparkle" aria-hidden="true">
+                <span
+                  className="quiz-personalization__sparkle"
+                  aria-hidden="true"
+                >
                   <svg viewBox="0 0 24 24" fill="none" role="presentation">
                     <path
                       d="M8 3.5L9.9 8.1L14.5 10L9.9 11.9L8 16.5L6.1 11.9L1.5 10L6.1 8.1L8 3.5Z"
@@ -154,10 +166,24 @@ export function QuizStartPage({
 
               <div className="quiz-personalization-grid">
                 <article className="personalization-card">
-                  <span className="personalization-card__icon-circle personalization-card__icon-circle--language" aria-hidden="true">
+                  <span
+                    className="personalization-card__icon-circle personalization-card__icon-circle--language"
+                    aria-hidden="true"
+                  >
                     <svg viewBox="0 0 24 24" fill="none" role="presentation">
-                      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.8" />
-                      <path d="M4 12H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="8"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      />
+                      <path
+                        d="M4 12H20"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                      />
                       <path
                         d="M12 4C14 6 15 9 15 12C15 15 14 18 12 20"
                         stroke="currentColor"
@@ -173,7 +199,10 @@ export function QuizStartPage({
                     </svg>
                   </span>
                   <div className="personalization-card__body">
-                    <label htmlFor="language-select" className="personalization-card__title">
+                    <label
+                      htmlFor="language-select"
+                      className="personalization-card__title"
+                    >
                       Langue du quiz
                     </label>
                     <div className="personalization-select-wrap">
@@ -181,7 +210,11 @@ export function QuizStartPage({
                         id="language-select"
                         className="personalization-select"
                         value={selectedLanguage}
-                        onChange={(event) => onLanguageChange(event.target.value as PatientLanguage)}
+                        onChange={(event) =>
+                          onLanguageChange(
+                            event.target.value as PatientLanguage,
+                          )
+                        }
                       >
                         {PATIENT_LANGUAGES.map((language) => (
                           <option key={language} value={language}>
@@ -189,18 +222,35 @@ export function QuizStartPage({
                           </option>
                         ))}
                       </select>
-                      <span className="personalization-select__chevron" aria-hidden="true">
-                        <svg viewBox="0 0 16 16" fill="none" role="presentation">
-                          <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      <span
+                        className="personalization-select__chevron"
+                        aria-hidden="true"
+                      >
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          role="presentation"
+                        >
+                          <path
+                            d="M4 6L8 10L12 6"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                          />
                         </svg>
                       </span>
                     </div>
-                    <p className="personalization-card__hint">Choisissez votre langue</p>
+                    <p className="personalization-card__hint">
+                      Choisissez votre langue
+                    </p>
                   </div>
                 </article>
 
                 <article className="personalization-card">
-                  <span className="personalization-card__icon-circle personalization-card__icon-circle--theme" aria-hidden="true">
+                  <span
+                    className="personalization-card__icon-circle personalization-card__icon-circle--theme"
+                    aria-hidden="true"
+                  >
                     <svg viewBox="0 0 24 24" fill="none" role="presentation">
                       <path
                         d="M5.5 5.5H18.5V18.5H5.5V5.5Z"
@@ -208,12 +258,23 @@ export function QuizStartPage({
                         strokeWidth="1.8"
                         strokeLinejoin="round"
                       />
-                      <path d="M9 5.5V18.5" stroke="currentColor" strokeWidth="1.8" />
-                      <path d="M10.5 9.5H18.5" stroke="currentColor" strokeWidth="1.8" />
+                      <path
+                        d="M9 5.5V18.5"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      />
+                      <path
+                        d="M10.5 9.5H18.5"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      />
                     </svg>
                   </span>
                   <div className="personalization-card__body">
-                    <label htmlFor="theme-select" className="personalization-card__title">
+                    <label
+                      htmlFor="theme-select"
+                      className="personalization-card__title"
+                    >
                       Thème du quiz
                     </label>
                     <div className="personalization-select-wrap">
@@ -230,35 +291,89 @@ export function QuizStartPage({
                           </option>
                         ))}
                       </select>
-                      <span className="personalization-select__chevron" aria-hidden="true">
-                        <svg viewBox="0 0 16 16" fill="none" role="presentation">
-                          <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      <span
+                        className="personalization-select__chevron"
+                        aria-hidden="true"
+                      >
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          role="presentation"
+                        >
+                          <path
+                            d="M4 6L8 10L12 6"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                          />
                         </svg>
                       </span>
                     </div>
-                    <p className="personalization-card__hint">Large éventail de sujets</p>
+                    <p className="personalization-card__hint">
+                      Large éventail de sujets
+                    </p>
                   </div>
                 </article>
 
                 <article className="personalization-card">
-                  <span className="personalization-card__icon-circle personalization-card__icon-circle--difficulty" aria-hidden="true">
+                  <span
+                    className="personalization-card__icon-circle personalization-card__icon-circle--difficulty"
+                    aria-hidden="true"
+                  >
                     <svg viewBox="0 0 24 24" fill="none" role="presentation">
-                      <rect x="5" y="13" width="3" height="6" rx="1" fill="currentColor" />
-                      <rect x="10.5" y="10" width="3" height="9" rx="1" fill="currentColor" />
-                      <rect x="16" y="6" width="3" height="13" rx="1" fill="currentColor" />
+                      <rect
+                        x="5"
+                        y="13"
+                        width="3"
+                        height="6"
+                        rx="1"
+                        fill="currentColor"
+                      />
+                      <rect
+                        x="10.5"
+                        y="10"
+                        width="3"
+                        height="9"
+                        rx="1"
+                        fill="currentColor"
+                      />
+                      <rect
+                        x="16"
+                        y="6"
+                        width="3"
+                        height="13"
+                        rx="1"
+                        fill="currentColor"
+                      />
                     </svg>
                   </span>
                   <div className="personalization-card__body">
                     <p className="personalization-card__title">Difficulté</p>
                     <p className="personalization-card__value-row">
-                      <span className="personalization-card__value">{labelForLevel(currentLevel)}</span>
-                      <span className="personalization-card__value-chevron" aria-hidden="true">
-                        <svg viewBox="0 0 16 16" fill="none" role="presentation">
-                          <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      <span className="personalization-card__value">
+                        {labelForLevel(currentLevel)}
+                      </span>
+                      <span
+                        className="personalization-card__value-chevron"
+                        aria-hidden="true"
+                      >
+                        <svg
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          role="presentation"
+                        >
+                          <path
+                            d="M4 6L8 10L12 6"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                          />
                         </svg>
                       </span>
                     </p>
-                    <p className="personalization-card__hint">Adapté à votre niveau</p>
+                    <p className="personalization-card__hint">
+                      Adapté à votre niveau
+                    </p>
                   </div>
                 </article>
               </div>
@@ -267,7 +382,11 @@ export function QuizStartPage({
             <MedicalNotice variant="start" />
 
             <div className="start-actions">
-              <button type="button" className="back-link start-back-action" onClick={onLogout}>
+              <button
+                type="button"
+                className="back-link start-back-action"
+                onClick={onLogout}
+              >
                 ← Retour
               </button>
               <button
@@ -276,9 +395,12 @@ export function QuizStartPage({
                 onClick={onOpenHistory}
                 disabled={isHistoryLoading}
               >
-                {isHistoryLoading ? 'Chargement...' : 'Derniers quiz'}
+                {isHistoryLoading ? "Chargement..." : "Derniers quiz"}
               </button>
-              <PrimaryButton className="start-action-button" onClick={() => onStart([quiz.id])}>
+              <PrimaryButton
+                className="start-action-button"
+                onClick={() => onStart([quiz.id])}
+              >
                 C&apos;est parti !
               </PrimaryButton>
             </div>
